@@ -1,6 +1,6 @@
 # Low-context image calendar intake
 
-> **Status:** planned functional milestone; public reference architecture
+> **Status:** in-progress functional milestone; public reference architecture
 > **Data rule:** synthetic structure only; no real household content
 
 ## Purpose

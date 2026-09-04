@@ -77,9 +77,10 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 - [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
+- [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md) — executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
 
 Planned documentation also includes agent coordination, authority and approval profiles, connector contracts, and synthetic conformance fixtures.
 
 ## Status
 
-Early architecture work. Low-friction calendar intake and delivery is a **planned functional milestone**, not an implemented compatibility claim. No production deployment or real household data is represented by this repository.
+Early implementation work. The first executable slice reconciles canonical HOUSE events to Google Calendar and records provider receipts; low-context extraction, setup UI, recurring automation, and multi-provider conformance remain planned. No production deployment or real household data is represented by this repository.

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "household-os"
+version = "0.1.0"
+description = "Provider-neutral household coordination reference implementation"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Household OS contributors" }]
+dependencies = []
+
+[project.scripts]
+household-calendar-sync = "household_os.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/household_os"]
