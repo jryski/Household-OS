@@ -223,11 +223,13 @@ calendar.intake                    off | on
 calendar.delivery                  off | on
 calendar.target_strategy           per_category | shared | feed | canonical_only
 calendar.category.<key>.enabled    false | true, per target
+calendar.category.<key>.visible    false | true, per display target
+calendar.category.<key>.queryable  false | true, per assistant target
 calendar.work_linking              off | suggest | auto_rules
 calendar.initial_sync              none | future | bounded_history
 ```
 
-Turning intake off means uploads are not implicitly promoted into calendar candidates. Turning delivery off leaves canonical intake available. `auto_rules` may create only work allowed by configured templates and authority policy; actions requiring approval remain gated.
+Turning intake off means uploads are not implicitly promoted into calendar candidates. Turning delivery off leaves canonical intake available. Delivery, visual display, and assistant queryability are separate choices: a category can be synchronized to a provider calendar for assistant lookup while remaining hidden on a household display. `auto_rules` may create only work allowed by configured templates and authority policy; actions requiring approval remain gated.
 
 ### Setup flow
 
@@ -236,7 +238,7 @@ Turning intake off means uploads are not implicitly promoted into calendar candi
 3. Offer `per_category` when the provider can list and create or bind calendars. Offer `shared`, `feed`, or `canonical_only` fallbacks according to actual capabilities.
 4. For each enabled category, search provider calendars using a deployment-defined stable managed marker and exact configured name. Reuse a unique exact match; never create another calendar merely because setup was retried.
 5. Create only missing category calendars when authorized and supported, then persist each binding and setup action receipt. If creation is unsupported, bind a selected existing target or use the configured fallback.
-6. Let the household toggle categories per target. For displays such as Skylight, separate category calendars or feeds provide reliable calendar-level show/hide controls when event-level filtering is unavailable.
+6. Let the household toggle delivery, display visibility, and assistant queryability per target. For displays such as Skylight, separate category calendars or feeds provide reliable calendar-level show/hide controls when event-level filtering is unavailable.
 7. Configure event-to-work behavior as `off`, `suggest`, or `auto_rules`, including any category templates and approval requirements.
 8. Build an initial-sync plan, show its scope, execute it through a resumable outbox, and report created, updated, skipped, review-required, and failed items.
 9. Schedule ongoing reconciliation and surface degraded bindings or unresolved conflicts without blocking canonical HOUSE use.
@@ -304,24 +306,40 @@ The system may select the district calendar as the canonical school-closure rang
 
 A household may want critical school closures on the family display while keeping lunch menus and minor reminders available on demand.
 
-A reasonable default profile is:
+A reasonable default profile separates assistant-readable delivery from display visibility:
 
-| Category | Store | External calendar default |
-|---|---:|---:|
-| no school / break | yes | on |
-| early release / half day | yes | on |
-| school event | yes | on |
-| conferences | yes | on |
-| optional PTO event | yes | configurable |
-| PTO meeting | yes | off |
-| lunch menu | yes | off |
-| snack / spirit / fundraiser day | yes | off |
+| Category | Store | Assistant-readable calendar | Household display |
+|---|---:|---:|---:|
+| no school / break | yes | on | on |
+| early release / half day | yes | on | on |
+| school event | yes | on | on |
+| conferences | yes | on | on |
+| optional PTO event | yes | configurable | configurable |
+| PTO meeting | yes | configurable | off |
+| lunch menu | yes | on when enabled | off |
+| snack / spirit / fundraiser day | yes | configurable | off |
 
 These are defaults, not policy. A deployment should let the household toggle each category per target.
 
 Skylight supports synchronization with external calendar providers. A robust adapter should not assume arbitrary event-level color metadata is preserved end-to-end. Where category-level show/hide behavior is required, an adapter can route categories into separate selectable provider calendars/feeds and map canonical Household OS colors to the provider or display when supported.
 
-A category toggle controls one delivery rule for one target. Enabling it queues eligible canonical events for synchronization. Disabling it prevents future delivery and applies the deployment's withdrawal policy to HOUSE-managed external copies. Neither action deletes canonical events. A direct Skylight integration may implement the same contract, but a provider calendar synchronized into Skylight is still one target hop and must retain its own link and health state.
+A category toggle controls one delivery or visibility rule for one target. Enabling delivery queues eligible canonical events for synchronization. Disabling delivery prevents future delivery and applies the deployment's withdrawal policy to HOUSE-managed external copies. A visibility toggle can hide an already-delivered category on a display without withdrawing the provider event. Neither action deletes canonical events. A direct Skylight integration may implement the same contract, but a provider calendar synchronized into Skylight is still one target hop and must retain its own link and health state.
+
+### Assistant-readable hidden calendars
+
+Low-display-value categories can still be high-query-value data. `school.lunch`, for example, can route to a native secondary Google Calendar that is hidden by default on Skylight while remaining available to Gemini and an authorized Google Home voice assistant.
+
+For this route:
+
+1. HOUSE continues to own the normalized lunch event and source evidence.
+2. Google delivery is enabled for the lunch category, preferably to its own native secondary calendar.
+3. Skylight or another visual display leaves that category calendar hidden by default.
+4. The relevant household Google account explicitly enables the additional calendar for its voice assistant and retains event read access.
+5. A voice query reads the provider delivery copy; it does not make Google the canonical lunch store.
+
+The distinction matters because Google documents secondary and shared Calendar support in [Gemini Apps](https://support.google.com/gemini/answer/15305236) and additional Google Calendar selection for [Google Home and Nest](https://support.google.com/googlehome/answer/7029002). Google Home does not support calendars imported from URLs or iCalendar feeds, so a native created or shared Google calendar is the required fallback target for that specific voice-assistant use case. Voice Match, account selection, provider settings, and provider availability remain deployment checks.
+
+Event titles should carry enough synthetic structure for provider search, such as a category label plus the normalized meal summary. Descriptions can retain additional provider-safe details, but HOUSE remains the authoritative source when an assistant response and source evidence disagree.
 
 ## Event-to-work automation
 
@@ -395,6 +413,7 @@ Setup and synchronization choose behavior from the latest capability snapshot:
 | Cannot list or verify calendars | Require an explicit binding supplied through the deployment UI and mark it unverified until a write/read receipt succeeds. |
 | Cannot create true all-day events | Use the same-local-day `12:00 AM`–`11:59 PM` representation and record `same_day_2359`. |
 | Cannot preserve event-level colors or filters | Route categories to separate calendars/feeds when possible; otherwise expose HOUSE toggles and document the display limitation. |
+| Assistant cannot query imported feeds | Use a native secondary or shared provider calendar when supported; otherwise mark assistant queryability unavailable while preserving display/feed delivery. |
 | Cannot update events | Mark changed deliveries `needs_reconcile`; do not blindly create replacements that can duplicate events. |
 | Cannot read provider changes | Operate as declared one-way delivery and use stored write receipts; do not claim two-way reconciliation. |
 | Read-only or disconnected | Continue canonical intake, retain the outbox with visible degraded status, and resume after a valid binding returns. |
@@ -421,12 +440,13 @@ A useful synthetic test suite should prove:
 9. conflicting source dates remain visible and require deterministic source-priority or human adjudication;
 10. a true all-day date survives timezone conversion unchanged;
 11. a provider without all-day creation receives a same-day timed event ending at `11:59 PM`, with no next-day visual bleed;
-12. lunch entries are stored but excluded from the default family-display target;
-13. toggling the lunch category queues or withdraws delivery without deleting the canonical events;
+12. lunch entries are stored and delivered to an enabled assistant-readable native calendar while remaining hidden on the default family-display target;
+13. toggling lunch delivery, assistant queryability, or display visibility changes only the intended target behavior and does not delete canonical events;
 14. a linked event rule creates one deterministic preparation task and does not duplicate it on reprocessing;
 15. an event date change updates eligible linked due dates while preserving completed work and manual overrides;
 16. an approval-required work item cannot be auto-approved by the intake or sync agent;
 17. initial sync resumes after partial failure without duplicating successful writes;
 18. changing an event after sync marks it eligible for update rather than duplicate creation;
 19. provider and canonical edits to the same governed field produce a visible conflict rather than an update loop;
-20. a failed provider retry is idempotent, and the full suite requires no real household content or production IDs.
+20. an assistant-route capability check rejects an imported feed when the selected voice platform requires a native calendar;
+21. a failed provider retry is idempotent, and the full suite requires no real household content or production IDs.

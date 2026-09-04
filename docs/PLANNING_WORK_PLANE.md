@@ -220,6 +220,8 @@ The safest default is that the household planning store owns work identity, depe
 
 Calendar delivery is configured during Household OS setup. A deployment may enable or disable intake, delivery, per-category calendars, category routes, and event-to-work automation independently. When supported, setup creates or binds category calendars so a household display can show or hide categories. When unsupported, the adapter uses an existing shared target, feed, or canonical-only mode and reports the limitation.
 
+Display visibility is separate from assistant queryability. A category such as lunch may be delivered to a native secondary Google Calendar for Gemini or Google Home lookup while remaining hidden by default on Skylight. The assistant reads a provider copy under its account and calendar-selection permissions; HOUSE remains canonical, and an imported iCalendar feed must not be presented as assistant-queryable when the selected voice platform does not support it.
+
 Canonical all-day events remain date-based. A provider that cannot create a true all-day object receives a same-local-day timed representation ending at `11:59 PM`; a timed midnight-to-midnight representation is not an acceptable fallback because it can display on the following day. The full setup, fallback, initial-sync, external-ID, deduplication, and reconciliation contract is defined in [`IMAGE_CALENDAR_INTAKE.md`](IMAGE_CALENDAR_INTAKE.md).
 
 ## Source-of-truth split

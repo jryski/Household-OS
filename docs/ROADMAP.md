@@ -28,6 +28,7 @@ HOS-1 makes calendar ingestion part of normal setup and daily use rather than a 
 - When the connected provider supports it, setup discovers exact existing category calendars, reuses them, and creates and binds only missing calendars.
 - When category calendars are not supported, setup offers the best supported target strategy without blocking canonical intake.
 - Each category can be enabled or disabled per target so displays such as Skylight can expose useful show/hide controls.
+- Delivery, assistant queryability, and visual visibility are independent: a lunch calendar can remain hidden on Skylight while a native provider calendar supplies the same events to Gemini or Google Home.
 - An uploaded image, PDF, screenshot, or other clearly dated artifact can become structured candidate events with minimal conversational context.
 - HOUSE normalizes dates and times, records source evidence, deduplicates repeated or overlapping input, and surfaces ambiguous or conflicting evidence.
 - Initial synchronization and ongoing reconciliation use stable external references, hashes, provider versions, and idempotent retries.
@@ -57,16 +58,17 @@ HOS-1 reaches acceptance only when synthetic tests demonstrate that:
 3. an existing exact binding is reused and setup retries do not create duplicate calendars;
 4. unsupported calendar creation degrades to binding, a shared target, a feed/export target, or canonical-only mode with a visible status;
 5. category toggles control delivery independently without removing canonical events;
-6. a low-context image or PDF produces structured candidate events linked to source evidence;
-7. repeated uploads and overlapping sources do not duplicate canonical or provider events;
-8. a true all-day event preserves its canonical date across timezone conversion;
-9. a provider without all-day creation receives a same-day timed representation ending at `11:59 PM` local time;
-10. initial sync can resume after partial failure without duplicating external events;
-11. ongoing changes, cancellations, provider edits, stale versions, and conflicts follow documented authority rules;
-12. every external write records its target, external ID when available, canonical hash, sync state, and action receipt;
-13. an event can create or link preparation work with dependencies, reminders, and an approval gate without conflating event and work lifecycles;
-14. disabling the feature or disconnecting a provider leaves HOUSE records queryable and reconcilable;
-15. the entire fixture suite uses synthetic data and contains no production calendar or household identifiers.
+6. a synthetic lunch category can be delivered to an assistant-readable native calendar while remaining hidden by default on the household display;
+7. a low-context image or PDF produces structured candidate events linked to source evidence;
+8. repeated uploads and overlapping sources do not duplicate canonical or provider events;
+9. a true all-day event preserves its canonical date across timezone conversion;
+10. a provider without all-day creation receives a same-day timed representation ending at `11:59 PM` local time;
+11. initial sync can resume after partial failure without duplicating external events;
+12. ongoing changes, cancellations, provider edits, stale versions, and conflicts follow documented authority rules;
+13. every external write records its target, external ID when available, canonical hash, sync state, and action receipt;
+14. an event can create or link preparation work with dependencies, reminders, and an approval gate without conflating event and work lifecycles;
+15. disabling the feature or disconnecting a provider leaves HOUSE records queryable and reconcilable;
+16. the entire fixture suite uses synthetic data and contains no production calendar or household identifiers.
 
 ## HOS-2 preview: connector conformance
 
