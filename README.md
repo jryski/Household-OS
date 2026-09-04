@@ -15,6 +15,8 @@ This repository is intentionally separate from:
 
 Household OS is where deployment-specific behavior belongs: virtual Kanban, agent coordination, household event planning, calendar adapters, connector reconciliation, user-facing workflows, and deployment policy.
 
+Low-friction calendar ingestion is a first-class platform capability. A household should be able to enable it during setup, upload an obviously dated image or PDF with minimal explanation, and have HOUSE normalize, deduplicate, route, and reconcile the resulting events. Optional provider calendars and household displays are delivery surfaces; HOUSE remains the canonical source.
+
 ## Public-repository rule
 
 Allowed here:
@@ -70,16 +72,14 @@ Household OS answers **what is happening, what needs to happen, who is involved,
 
 Agent conversations are not the primary coordination primitive. Shared work objects, events, decisions, evidence references, and append-only activity are.
 
-## Planned documentation
+## Architecture documents
 
-- architecture and domain boundaries;
-- virtual Kanban and work-item lifecycle;
-- agent coordination and periodic reconciliation;
-- event/calendar canonical model;
-- connector observation/reconciliation contracts;
-- authority and approval model;
-- public-repository privacy and synthetic-fixture policy.
+- [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
+- [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
+
+Planned documentation also includes agent coordination, authority and approval profiles, connector contracts, and synthetic conformance fixtures.
 
 ## Status
 
-Early architecture work. No production deployment, real household data, or compatibility claim is represented by this repository.
+Early architecture work. Low-friction calendar intake and delivery is a **planned functional milestone**, not an implemented compatibility claim. No production deployment or real household data is represented by this repository.

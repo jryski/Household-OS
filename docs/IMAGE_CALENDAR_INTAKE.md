@@ -1,6 +1,6 @@
 # Low-context image calendar intake
 
-> **Status:** public reference architecture  
+> **Status:** planned functional milestone; public reference architecture
 > **Data rule:** synthetic structure only; no real household content
 
 ## Purpose
@@ -29,6 +29,17 @@ When the active context is Household OS and the uploaded artifact visibly contai
 5. **Deduplication.** Repeated uploads and overlapping source documents must not create duplicate calendar events.
 6. **Category-driven delivery.** Store more than the household chooses to display.
 7. **Provider neutrality.** Google, Outlook, Apple, Skylight, iCalendar, or another display is a delivery surface, not the canonical household source of truth.
+8. **Setup, not scripting.** Enabling the feature, binding targets, and creating supported category calendars belong in the Household OS setup flow.
+9. **Work-aware events.** Events can create or link preparation work without collapsing event and work lifecycles into one object.
+
+## Architectural invariants
+
+- HOUSE is canonical for normalized household events, evidence, delivery intent, and event-to-work relationships.
+- A provider is authoritative only for provider-owned details explicitly assigned to it, such as its object version, delivery state, and provider-native presentation metadata.
+- Canonical all-day dates remain dates. Provider-specific rendering fallbacks are recorded on the delivery link and never rewrite the canonical event.
+- Intake and provider delivery are independently configurable. A deployment can capture events without connecting or writing to any external calendar.
+- Every setup or synchronization retry is idempotent. Retrying may continue incomplete work; it must not create duplicate calendars, events, or work items.
+- Disabling a route stops or withdraws delivery according to deployment policy but does not destroy the canonical event, source evidence, or activity history.
 
 ## Canonical objects
 
@@ -118,10 +129,37 @@ label
 provider             google | skylight | outlook | apple | ical | other
 external_calendar_ref
 active
+binding_state        unbound | bound | degraded | disconnected | error
+managed_by_house     whether setup created or adopted this target for managed delivery
+capability_ref       capability snapshot used for the current binding
 metadata
 ```
 
-Credentials and private topology do not belong in this public repository.
+Credentials and private topology do not belong in this public repository. Production external references belong only in the deployment store; public fixtures use synthetic values.
+
+### `provider_capability_snapshot`
+
+Records what a provider connection can do at setup or reconciliation time instead of assuming every connector supports the same operations:
+
+```text
+capability_ref
+provider
+observed_at
+can_list_calendars
+can_create_calendars
+can_write_events
+can_update_events
+can_cancel_or_delete_events
+can_create_true_all_day
+can_set_event_color
+can_set_calendar_color
+can_manage_reminders
+can_read_provider_changes
+supports_idempotency_key
+metadata
+```
+
+Capabilities can change after consent is revoked or a connector version changes. The reconciler must refresh stale snapshots and degrade visibly when a previously available capability disappears.
 
 ### `calendar_delivery_rule`
 
@@ -133,6 +171,7 @@ category_key
 enabled
 color_override
 route_key
+delivery_mode        category_calendar | shared_calendar | feed | canonical_only
 metadata
 ```
 
@@ -149,12 +188,60 @@ external_calendar_ref
 external_event_id
 canonical_hash
 provider_version
+provider_hash
+rendering_mode       true_all_day | same_day_2359 | timed
 sync_state
 last_synced_at
 last_error
+last_action_receipt
 ```
 
 This link prevents duplicate creation, enables idempotent updates, and detects canonical changes that require re-sync.
+
+### `event_work_link`
+
+Links an event to planning-plane work without pretending an event is a task:
+
+```text
+event_id
+work_item_id
+relationship         prepares_for | required_for | reminder_for | approval_for | related
+rule_ref              optional rule or template that created the link
+offset                optional scheduling offset from the event
+sync_policy           none | dates_only | dates_and_status
+metadata
+```
+
+The planning model and lifecycle rules are defined in [`PLANNING_WORK_PLANE.md`](PLANNING_WORK_PLANE.md).
+
+## Setup contract
+
+Calendar ingestion is an optional setup capability, not a separate expert-run script. A deployment should expose the following provider-neutral choices; product labels may be friendlier than these logical keys.
+
+```text
+calendar.intake                    off | on
+calendar.delivery                  off | on
+calendar.target_strategy           per_category | shared | feed | canonical_only
+calendar.category.<key>.enabled    false | true, per target
+calendar.work_linking              off | suggest | auto_rules
+calendar.initial_sync              none | future | bounded_history
+```
+
+Turning intake off means uploads are not implicitly promoted into calendar candidates. Turning delivery off leaves canonical intake available. `auto_rules` may create only work allowed by configured templates and authority policy; actions requiring approval remain gated.
+
+### Setup flow
+
+1. Ask whether calendar intake and external delivery should be enabled. Setup must remain completable when either is off.
+2. Connect the chosen provider only when delivery is enabled and capture a capability snapshot.
+3. Offer `per_category` when the provider can list and create or bind calendars. Offer `shared`, `feed`, or `canonical_only` fallbacks according to actual capabilities.
+4. For each enabled category, search provider calendars using a deployment-defined stable managed marker and exact configured name. Reuse a unique exact match; never create another calendar merely because setup was retried.
+5. Create only missing category calendars when authorized and supported, then persist each binding and setup action receipt. If creation is unsupported, bind a selected existing target or use the configured fallback.
+6. Let the household toggle categories per target. For displays such as Skylight, separate category calendars or feeds provide reliable calendar-level show/hide controls when event-level filtering is unavailable.
+7. Configure event-to-work behavior as `off`, `suggest`, or `auto_rules`, including any category templates and approval requirements.
+8. Build an initial-sync plan, show its scope, execute it through a resumable outbox, and report created, updated, skipped, review-required, and failed items.
+9. Schedule ongoing reconciliation and surface degraded bindings or unresolved conflicts without blocking canonical HOUSE use.
+
+Setup stores provider IDs only in the private deployment. This public architecture documents field shapes and synthetic examples, never real calendar names, IDs, accounts, or household data.
 
 ## Intake workflow
 
@@ -176,12 +263,11 @@ attach source evidence
 resolve or surface conflicts
         ↓
 store canonical event
-        ↓
-category delivery rules
-        ↓
-provider reconciliation outbox
-        ↓
-Google / Outlook / Apple / Skylight / iCal
+        ├── category delivery rules → provider reconciliation outbox
+        │                              ↓
+        │                     calendar / display targets
+        │
+        └── event-to-work rules → suggested or created Kanban work
 ```
 
 ## Intent inference rule
@@ -198,6 +284,8 @@ Good implicit-intake examples:
 Do **not** auto-promote every image containing a date. A receipt date, copyright year, screenshot timestamp, or incidental date is not necessarily an event.
 
 Ambiguous intent should remain a candidate or require human clarification rather than creating a confident canonical event.
+
+Minimal context does not mean silent guesswork. The intake service should use artifact shape, current Household OS context, source authority, and configured confidence thresholds. It may auto-promote high-confidence, reversible event captures; low-confidence dates, destructive provider changes, and authority-sensitive actions remain reviewable. The completion response should summarize what was captured, excluded, or held for review without requiring the household to operate the pipeline manually.
 
 ## Source authority and conflicts
 
@@ -233,9 +321,55 @@ These are defaults, not policy. A deployment should let the household toggle eac
 
 Skylight supports synchronization with external calendar providers. A robust adapter should not assume arbitrary event-level color metadata is preserved end-to-end. Where category-level show/hide behavior is required, an adapter can route categories into separate selectable provider calendars/feeds and map canonical Household OS colors to the provider or display when supported.
 
+A category toggle controls one delivery rule for one target. Enabling it queues eligible canonical events for synchronization. Disabling it prevents future delivery and applies the deployment's withdrawal policy to HOUSE-managed external copies. Neither action deletes canonical events. A direct Skylight integration may implement the same contract, but a provider calendar synchronized into Skylight is still one target hop and must retain its own link and health state.
+
+## Event-to-work automation
+
+Calendar ingestion should be able to create useful preparation work in the same transaction or workflow that accepts an event. Work creation is rule-driven and independently configurable.
+
+Synthetic rules might express:
+
+```text
+school.event          suggest: review details 7 days before
+school.conference     create: choose slot → approval: confirm booking
+travel.departure      create: packing checklist → blocks: ready-to-leave milestone
+home.maintenance      create: clear access area 1 day before
+```
+
+Rules may create tasks, dependencies, reminders, approvals, or other work items. Each generated item carries an `event_work_link`, rule reference, provenance, and deterministic identity so reprocessing the same event does not duplicate work. Date changes may recompute linked due dates according to each link's `sync_policy`; they must not erase completed work, accepted evidence, manual overrides, or approval history.
+
+`suggest` places proposed work in review or inbox. `auto_rules` may create pre-authorized work but does not grant authority to spend money, contact an external party, expose private content, or approve a protected action.
+
+## All-day and display-safe rendering
+
+Canonical all-day events use `start_date` and `end_date` date semantics. If a provider supports true all-day events, the adapter uses that provider's all-day representation, including an exclusive next-date boundary when the API requires one. The boundary is an API encoding detail, not a timed midnight event.
+
+If the connector cannot create true all-day events, it must render the event as a same-local-day timed representation:
+
+```text
+start: 12:00 AM in the event timezone
+end:   11:59 PM on the same local date
+rendering_mode: same_day_2359
+```
+
+For a multi-day event, each provider representation must preserve the intended visible date range without adding an extra display day. An adapter may use one same-day timed event per date when that is the only reliable option. It must never use a timed midnight-to-midnight fallback that causes the event to bleed into the next day on a household display. The canonical event remains all-day, and the fallback mode is recorded only in `calendar_event_link` metadata.
+
 ## Reconciliation rule
 
 The event store is authoritative for the canonical household representation. The provider remains authoritative for provider-specific state.
+
+### Initial sync
+
+Initial sync is a planned, resumable reconciliation pass rather than an untracked bulk export:
+
+1. freeze the selected targets, category toggles, time scope, and capability snapshot into a sync plan;
+2. discover existing HOUSE-managed objects by stored external link, managed marker, and deterministic identity, in that order;
+3. compute desired creates, updates, withdrawals, skips, and review-required conflicts without writing;
+4. execute through an idempotent outbox and persist each external ID, provider version, rendering mode, and action receipt as soon as it succeeds;
+5. resume only incomplete operations after interruption;
+6. report the final counts and unresolved items without treating partial provider success as canonical data loss.
+
+### Ongoing reconciliation
 
 Outbound synchronization should be idempotent:
 
@@ -247,6 +381,27 @@ Outbound synchronization should be idempotent:
 6. record failures without creating duplicate events on retry;
 7. treat cancellation separately from destructive deletion.
 
+When provider change reads are supported, the reconciler also records a provider hash and version. Provider-only presentation changes can remain provider-owned. A date, title, cancellation, or recurrence change that overlaps a newer canonical change becomes a conflict unless the target's authority policy assigns that field to the provider. Two-way synchronization must attach observations and queue adjudication rather than letting the same edit loop between systems.
+
+Missing or externally deleted provider objects are not automatically evidence that the canonical HOUSE event should be deleted. Depending on policy, reconciliation recreates a HOUSE-managed delivery copy, accepts a provider-owned deletion as a cancellation observation, or requests review. The decision and resulting write receive an activity record and action receipt.
+
+## Provider capability fallbacks
+
+Setup and synchronization choose behavior from the latest capability snapshot:
+
+| Missing capability | Required fallback |
+|---|---|
+| Cannot create secondary calendars | Bind an existing calendar, use one shared target, publish a selectable feed, or remain canonical-only. Do not block intake. |
+| Cannot list or verify calendars | Require an explicit binding supplied through the deployment UI and mark it unverified until a write/read receipt succeeds. |
+| Cannot create true all-day events | Use the same-local-day `12:00 AM`–`11:59 PM` representation and record `same_day_2359`. |
+| Cannot preserve event-level colors or filters | Route categories to separate calendars/feeds when possible; otherwise expose HOUSE toggles and document the display limitation. |
+| Cannot update events | Mark changed deliveries `needs_reconcile`; do not blindly create replacements that can duplicate events. |
+| Cannot read provider changes | Operate as declared one-way delivery and use stored write receipts; do not claim two-way reconciliation. |
+| Read-only or disconnected | Continue canonical intake, retain the outbox with visible degraded status, and resume after a valid binding returns. |
+| Cannot manage reminders | Keep reminder intent in HOUSE or linked work and use provider defaults only when explicitly configured. |
+
+Graceful degradation means the household can keep capturing and planning in HOUSE, can see what is and is not being delivered, and can recover after provider capability returns. It does not mean silently pretending an unsupported operation succeeded.
+
 ## Privacy rule
 
 This public repository may contain the interface, schema shape, synthetic fixtures, and generic adapter behavior only. It must never contain real school names, household member names, schedules, uploaded images, provider calendar IDs, account identifiers, or production database references.
@@ -255,13 +410,23 @@ This public repository may contain the interface, schema shape, synthetic fixtur
 
 A useful synthetic test suite should prove:
 
-1. one photo containing ten school dates produces ten structured candidate events;
-2. the same photo uploaded twice does not duplicate events;
-3. a second source supporting the same date attaches evidence instead of creating another event;
-4. conflicting source dates remain visible and require deterministic source-priority or human adjudication;
-5. an all-day date survives timezone conversion unchanged;
-6. lunch entries are stored but excluded from the default family-display target;
-7. toggling the lunch category causes those events to enter the synchronization outbox;
-8. changing an event after sync marks it eligible for update rather than duplicate creation;
-9. a failed provider retry is idempotent;
-10. no real household content is required to run the test suite.
+1. setup succeeds with intake and delivery disabled and requires no provider connection;
+2. setup creates and binds missing synthetic category calendars when the provider supports it;
+3. rerunning setup reuses exact managed bindings and creates no duplicate calendars;
+4. a provider without calendar creation degrades to a supported binding or canonical-only mode with visible status;
+5. one low-context photo containing ten school dates produces ten structured candidate events;
+6. an equivalent PDF follows the same intake path without a special import script;
+7. the same artifact uploaded twice does not duplicate events;
+8. a second source supporting the same date attaches evidence instead of creating another event;
+9. conflicting source dates remain visible and require deterministic source-priority or human adjudication;
+10. a true all-day date survives timezone conversion unchanged;
+11. a provider without all-day creation receives a same-day timed event ending at `11:59 PM`, with no next-day visual bleed;
+12. lunch entries are stored but excluded from the default family-display target;
+13. toggling the lunch category queues or withdraws delivery without deleting the canonical events;
+14. a linked event rule creates one deterministic preparation task and does not duplicate it on reprocessing;
+15. an event date change updates eligible linked due dates while preserving completed work and manual overrides;
+16. an approval-required work item cannot be auto-approved by the intake or sync agent;
+17. initial sync resumes after partial failure without duplicating successful writes;
+18. changing an event after sync marks it eligible for update rather than duplicate creation;
+19. provider and canonical edits to the same governed field produce a visible conflict rather than an update loop;
+20. a failed provider retry is idempotent, and the full suite requires no real household content or production IDs.

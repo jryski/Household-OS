@@ -71,6 +71,23 @@ Activity is not merely UI history. It is how the household can answer, "Why did 
 
 Links a canonical household work item to Google Calendar, Skylight, school systems, email threads, orders, tickets, or another provider object without making that provider the entire household source of truth.
 
+### Event-to-work link
+
+Links a canonical event to preparation or follow-up work while preserving their separate identities and lifecycles:
+
+```text
+event_id
+work_item_id
+relationship         prepares_for | required_for | reminder_for | approval_for | related
+rule_ref              optional event-work rule or template
+offset                optional due/not-before offset from event time
+sync_policy           none | dates_only | dates_and_status
+last_derived_hash
+metadata
+```
+
+A deterministic identity derived from the event, rule, and template prevents duplicate tasks when an artifact is reprocessed or provider synchronization retries.
+
 ## Lifecycle
 
 A useful default lifecycle is:
@@ -145,6 +162,46 @@ Work: charge camera
 
 The event supplies time and attendance context. The planning plane tracks preparation, dependencies, responsibility, completion, and evidence.
 
+### Link modes
+
+Event-to-work automation is optional during setup and has three modes:
+
+- **Off:** events do not automatically propose or create work; users may still link items manually.
+- **Suggest:** matching rules create proposed work in `inbox` or `review` for confirmation.
+- **Auto rules:** pre-authorized templates create work automatically, but authority and approval checks still apply to protected actions.
+
+Rules are scoped by event category, source authority, household profile, and target board. A rule can specify:
+
+- a task, checklist, milestone, decision, reminder, or approval item;
+- due and not-before offsets relative to event start;
+- parent/child and dependency relationships;
+- default assignee or eligible role, without bypassing assignment policy;
+- required evidence and acceptance criteria;
+- whether later event date changes may update derived work dates.
+
+### Change behavior
+
+When an event date changes, linked incomplete work with `dates_only` or `dates_and_status` may have its derived dates recalculated. Completed work, accepted evidence, manual date overrides, and approval history are preserved. A cancelled event may cancel untouched generated work when policy allows, but in-progress or completed work is flagged for review instead of silently erased.
+
+Changing a work item's status must not rewrite the event unless an explicit relationship and policy allows it. Completing `buy required clothing`, for example, does not complete or cancel the concert. Likewise, delivery failure to Google Calendar does not block HOUSE preparation work from proceeding.
+
+### Event-to-work workflow
+
+```text
+canonical HOUSE event
+        ↓
+category + source + authority rule evaluation
+        ├── no match → event only
+        ├── suggest → proposed work → human review
+        └── auto rule → authorized work items
+                            ↓
+                 dependencies / reminders / approvals
+                            ↓
+                    normal Kanban lifecycle
+```
+
+Every generated item records the source event, triggering rule, activity entry, and creation receipt. Re-evaluation is idempotent.
+
 ## Google Calendar and Skylight
 
 A future adapter must explicitly define:
@@ -160,6 +217,10 @@ A future adapter must explicitly define:
 - action receipts for external writes.
 
 The safest default is that the household planning store owns work identity, dependency, review, and history, while the calendar provider remains authoritative for its provider-specific event object.
+
+Calendar delivery is configured during Household OS setup. A deployment may enable or disable intake, delivery, per-category calendars, category routes, and event-to-work automation independently. When supported, setup creates or binds category calendars so a household display can show or hide categories. When unsupported, the adapter uses an existing shared target, feed, or canonical-only mode and reports the limitation.
+
+Canonical all-day events remain date-based. A provider that cannot create a true all-day object receives a same-local-day timed representation ending at `11:59 PM`; a timed midnight-to-midnight representation is not an acceptable fallback because it can display on the following day. The full setup, fallback, initial-sync, external-ID, deduplication, and reconciliation contract is defined in [`IMAGE_CALENDAR_INTAKE.md`](IMAGE_CALENDAR_INTAKE.md).
 
 ## Source-of-truth split
 
@@ -183,6 +244,11 @@ A useful first fixture set should prove:
 8. A private annotation that cannot be retrieved through the household board.
 9. Revoked or expired agent access failing closed.
 10. A provider synchronization retry that is idempotent and does not create a duplicate event.
+11. A low-context calendar artifact creating a canonical event and one linked preparation task under a synthetic rule.
+12. Reprocessing that event without duplicating its linked task, reminder, dependency, or approval.
+13. An event date change recomputing eligible open-work dates while preserving a completed task and a manual override.
+14. A cancelled event routing active linked work to review instead of silently deleting it.
+15. Calendar delivery being disabled while canonical events and linked Kanban work remain available.
 
 ## Relationship to the current build board
 

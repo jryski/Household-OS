@@ -48,7 +48,9 @@ Planning is first-class Household OS behavior. The household source of truth sho
 
 Google Calendar, Skylight, school systems, mail, and other providers are adapters or authorities for their own external objects. They do not silently replace the household board's canonical work identity, dependency, review, and activity history.
 
-See [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md).
+Low-friction calendar ingestion is part of that planning surface: setup can optionally configure category delivery targets, dated artifacts can become canonical events with minimal context, and those events can spawn governed preparation work. Provider capability gaps degrade delivery, not canonical intake or Kanban coordination.
+
+See [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md), [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md), and [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Privacy boundary
 
