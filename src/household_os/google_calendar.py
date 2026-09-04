@@ -139,8 +139,21 @@ def render_google_event(
             "timeZone": item.timezone,
         }
         mode = "same_day_2359"
+    elif item.end_time is None:
+        assert item.start_time is not None
+        start = datetime.combine(item.start_date, item.start_time)
+        end = start + timedelta(hours=1)
+        body["start"] = {
+            "dateTime": start.isoformat(timespec="seconds"),
+            "timeZone": item.timezone,
+        }
+        body["end"] = {
+            "dateTime": end.isoformat(timespec="seconds"),
+            "timeZone": item.timezone,
+        }
+        mode = "timed_default_60m"
     else:
-        assert item.start_time is not None and item.end_time is not None
+        assert item.start_time is not None
         start = datetime.combine(item.start_date, item.start_time)
         end = datetime.combine(item.end_date, item.end_time)
         body["start"] = {

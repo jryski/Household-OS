@@ -31,6 +31,7 @@ Google is a delivery copy. HOUSE remains canonical for meal content, source evid
 - Google events are private, transparent/non-blocking, and have reminders disabled.
 - Direct Google API delivery uses true all-day events.
 - Connectors without true all-day creation use the explicit `12:00 AM`–`11:59 PM` local-time fallback.
+- A timed source with a known start but no stated end remains incomplete in HOUSE and receives a provider-only 60-minute display fallback recorded as `timed_default_60m`.
 - Output reports counts only; it does not print event titles, provider IDs, or household content.
 - A service-role-only `get_household_lunch(date, timezone)` function gives authorized agents a canonical HOUSE query path.
 
@@ -90,3 +91,4 @@ Google Home does not treat an imported URL/iCalendar feed as an equivalent assis
 8. An authorized agent can answer the lunch query from HOUSE; an authorized Gemini or Google Home account can answer from the provider copy.
 9. A forced provider failure records an error and leaves the item eligible for retry.
 10. Logs, command output, fixtures, and Git history contain no credentials, production IDs, or real household content.
+11. A start-only timed event receives a one-hour provider rendering without inventing a canonical end time, and the fallback mode is recorded on its external link.

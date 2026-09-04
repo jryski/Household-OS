@@ -412,6 +412,7 @@ Setup and synchronization choose behavior from the latest capability snapshot:
 | Cannot create secondary calendars | Bind an existing calendar, use one shared target, publish a selectable feed, or remain canonical-only. Do not block intake. |
 | Cannot list or verify calendars | Require an explicit binding supplied through the deployment UI and mark it unverified until a write/read receipt succeeds. |
 | Cannot create true all-day events | Use the same-local-day `12:00 AM`–`11:59 PM` representation and record `same_day_2359`. |
+| Timed source states a start but no end | Preserve the missing canonical end, render a provider-only 60-minute default, and record `timed_default_60m` so later evidence can replace it. |
 | Cannot preserve event-level colors or filters | Route categories to separate calendars/feeds when possible; otherwise expose HOUSE toggles and document the display limitation. |
 | Assistant cannot query imported feeds | Use a native secondary or shared provider calendar when supported; otherwise mark assistant queryability unavailable while preserving display/feed delivery. |
 | Cannot update events | Mark changed deliveries `needs_reconcile`; do not blindly create replacements that can duplicate events. |
@@ -450,3 +451,4 @@ A useful synthetic test suite should prove:
 19. provider and canonical edits to the same governed field produce a visible conflict rather than an update loop;
 20. an assistant-route capability check rejects an imported feed when the selected voice platform requires a native calendar;
 21. a failed provider retry is idempotent, and the full suite requires no real household content or production IDs.
+22. a start-only timed event receives a recorded provider-only default duration without fabricating a canonical end time.

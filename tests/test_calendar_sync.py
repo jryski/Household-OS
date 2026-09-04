@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import date
+from datetime import date, time
 
 from household_os.calendar_sync import (
     CalendarReconciler,
@@ -73,6 +73,27 @@ class RenderingTests(unittest.TestCase):
             ProviderCapabilities(true_all_day=False),
         )
         self.assertEqual(rendered.body["end"]["dateTime"], "2030-09-12T23:59:00")
+
+    def test_missing_timed_end_uses_provider_only_one_hour_default(self) -> None:
+        rendered = render_google_event(
+            lunch_event(
+                category_key="school.pto_meeting",
+                target_key="gcal-school-pto-meeting",
+                all_day=False,
+                start_time=time(18, 0),
+                end_time=None,
+            ),
+            ProviderCapabilities(true_all_day=False),
+        )
+        self.assertEqual(rendered.rendering_mode, "timed_default_60m")
+        self.assertEqual(
+            rendered.body["start"],
+            {"dateTime": "2030-09-10T18:00:00", "timeZone": "America/Detroit"},
+        )
+        self.assertEqual(
+            rendered.body["end"],
+            {"dateTime": "2030-09-10T19:00:00", "timeZone": "America/Detroit"},
+        )
 
     def test_provider_id_is_deterministic_and_calendar_compatible(self) -> None:
         item = lunch_event()

@@ -78,8 +78,8 @@ class DeliveryItem:
             raise ValueError("event title is empty")
         if self.all_day and (self.start_time is not None or self.end_time is not None):
             raise ValueError("canonical all-day event cannot include times")
-        if not self.all_day and (self.start_time is None or self.end_time is None):
-            raise ValueError("timed event requires start_time and end_time")
+        if not self.all_day and self.start_time is None:
+            raise ValueError("timed event requires start_time")
         if self.provider != "google":
             raise ValueError(f"unsupported provider: {self.provider}")
 

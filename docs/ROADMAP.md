@@ -43,6 +43,7 @@ The first executable dogfood slice is delivered:
 - a server-side reconciler reads the canonical delivery outbox and writes idempotent Google Calendar events;
 - provider success and failure receipts update external links atomically;
 - true all-day and same-day `11:59 PM` rendering modes are implemented and tested;
+- start-only timed events use a recorded provider-only 60-minute display fallback while canonical uncertainty remains intact;
 - the lunch route is assistant-queryable while remaining display-hidden by default;
 - authorized agents have a canonical HOUSE lunch query independent of Google;
 - provider IDs are deterministic in the direct adapter, retries are bounded, and command output omits household content;
