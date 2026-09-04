@@ -79,6 +79,10 @@ After the native secondary calendar is populated:
 
 Google Home does not treat an imported URL/iCalendar feed as an equivalent assistant-readable calendar. This route therefore requires a native created or shared Google calendar.
 
+For the current Skylight dogfood path, connect the household Google account through Skylight's official setup using **one-way sync**, enable the HOUSE category calendars intended for the display, and leave the lunch calendar disabled. This is a one-time display binding; Google event delivery continues independently.
+
+The experimental adapter in [`SKYLIGHT_DISPLAY_BRIDGE.md`](SKYLIGHT_DISPLAY_BRIDGE.md) can automate the active-calendar selection after that official account connection. It is not the default production path until authentication can be bounded and rotated without storing the household's Skylight password.
+
 ## Dogfood acceptance checks
 
 1. `plan` reports the expected bounded scope without provider writes.
@@ -92,3 +96,4 @@ Google Home does not treat an imported URL/iCalendar feed as an equivalent assis
 9. A forced provider failure records an error and leaves the item eligible for retry.
 10. Logs, command output, fixtures, and Git history contain no credentials, production IDs, or real household content.
 11. A start-only timed event receives a one-hour provider rendering without inventing a canonical end time, and the fallback mode is recorded on its external link.
+12. Skylight shows enabled HOUSE category calendars while the lunch category remains hidden, and non-HOUSE calendars keep their prior active state.

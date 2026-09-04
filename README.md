@@ -78,9 +78,11 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
 - [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md) — executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
+- [`docs/SKYLIGHT_DISPLAY_BRIDGE.md`](docs/SKYLIGHT_DISPLAY_BRIDGE.md) — official connection handoff and experimental, calendar-only display visibility reconciliation.
+- [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md) — attribution for interface research and permitted derived work.
 
 Planned documentation also includes agent coordination, authority and approval profiles, connector contracts, and synthetic conformance fixtures.
 
 ## Status
 
-Early implementation work. The first executable slice reconciles canonical HOUSE events to Google Calendar and records provider receipts; low-context extraction, setup UI, recurring automation, and multi-provider conformance remain planned. No production deployment or real household data is represented by this repository.
+Early implementation work. The first executable slice reconciles canonical HOUSE events to Google Calendar and records provider receipts. A tested experimental adapter can plan or apply Skylight active-calendar visibility without modifying events or unrelated calendars, but sanctioned least-privilege authentication and setup UI remain open. Low-context extraction, recurring automation, and multi-provider conformance remain planned. No production deployment or real household data is represented by this repository.

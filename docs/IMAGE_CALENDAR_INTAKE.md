@@ -227,6 +227,8 @@ calendar.category.<key>.visible    false | true, per display target
 calendar.category.<key>.queryable  false | true, per assistant target
 calendar.work_linking              off | suggest | auto_rules
 calendar.initial_sync              none | future | bounded_history
+calendar.display.skylight.mode     off | official_handoff | experimental_api
+calendar.display.skylight.apply    plan_only | apply_with_receipt
 ```
 
 Turning intake off means uploads are not implicitly promoted into calendar candidates. Turning delivery off leaves canonical intake available. Delivery, visual display, and assistant queryability are separate choices: a category can be synchronized to a provider calendar for assistant lookup while remaining hidden on a household display. `auto_rules` may create only work allowed by configured templates and authority policy; actions requiring approval remain gated.
@@ -324,6 +326,10 @@ These are defaults, not policy. A deployment should let the household toggle eac
 Skylight supports synchronization with external calendar providers. A robust adapter should not assume arbitrary event-level color metadata is preserved end-to-end. Where category-level show/hide behavior is required, an adapter can route categories into separate selectable provider calendars/feeds and map canonical Household OS colors to the provider or display when supported.
 
 A category toggle controls one delivery or visibility rule for one target. Enabling delivery queues eligible canonical events for synchronization. Disabling delivery prevents future delivery and applies the deployment's withdrawal policy to HOUSE-managed external copies. A visibility toggle can hide an already-delivered category on a display without withdrawing the provider event. Neither action deletes canonical events. A direct Skylight integration may implement the same contract, but a provider calendar synchronized into Skylight is still one target hop and must retain its own link and health state.
+
+The first direct Skylight experiment intentionally implements only calendar-account activation. After a household uses Skylight's official one-way Google connection, HOUSE can read the connected account's active sub-calendar references, preserve every unmanaged reference, add HOUSE routes whose display visibility is on, and remove HOUSE routes whose display visibility is off. It does not create, update, or delete Skylight events. The implementation is documented in [`SKYLIGHT_DISPLAY_BRIDGE.md`](SKYLIGHT_DISPLAY_BRIDGE.md).
+
+Because the observed Skylight API is not a documented public integration contract and its available OAuth token is broader than this operation, `official_handoff` remains the default. `experimental_api` must be separately enabled, use a server-side revocable token, emit a redacted plan/receipt, and fall back to the official one-way setup screen when authentication or capability checks fail.
 
 ### Assistant-readable hidden calendars
 

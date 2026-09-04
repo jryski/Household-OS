@@ -48,8 +48,10 @@ The first executable dogfood slice is delivered:
 - authorized agents have a canonical HOUSE lunch query independent of Google;
 - provider IDs are deterministic in the direct adapter, retries are bounded, and command output omits household content;
 - the deployed schema and worker have passed local tests, live canary/bulk reconciliation, and security/performance review.
+- an experimental calendar-only Skylight adapter can preserve unmanaged calendars, activate HOUSE categories marked visible, and remove HOUSE categories marked hidden without writing display-side events;
+- Skylight API work is isolated behind an explicit experimental boundary because the observed token scope is broader than the calendar operation HOUSE needs.
 
-Low-context image/PDF extraction, setup UI, automated provider-calendar creation, recurring worker execution, event-to-Kanban generation, and multi-provider conformance remain in progress. This checkpoint is not milestone completion.
+Low-context image/PDF extraction, setup UI, automated provider-calendar creation, sanctioned least-privilege Skylight authentication, recurring worker execution, event-to-Kanban generation, and multi-provider conformance remain in progress. This checkpoint is not milestone completion.
 
 ### Required development contracts
 
@@ -84,6 +86,8 @@ HOS-1 reaches acceptance only when synthetic tests demonstrate that:
 14. an event can create or link preparation work with dependencies, reminders, and an approval gate without conflating event and work lifecycles;
 15. disabling the feature or disconnecting a provider leaves HOUSE records queryable and reconcilable;
 16. the entire fixture suite uses synthetic data and contains no production calendar or household identifiers.
+17. Skylight activation preserves every non-HOUSE active calendar, activates only HOUSE routes marked visible, and leaves the assistant-readable lunch route hidden by default;
+18. an unavailable or changed Skylight API degrades to a precise official one-way setup handoff without blocking Google delivery or canonical HOUSE use.
 
 ## HOS-2 preview: connector conformance
 
