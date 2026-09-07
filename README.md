@@ -1,5 +1,10 @@
 # Household OS
 
+Maintained as part of the WIRE SPEED COMPUTING LLC program led by Jesse Ryski.
+[Website](https://www.wirespeedcomputers.com/) |
+[Program guide](https://github.com/WireSpeedComputing/sovereign-ai-os).
+Existing license terms and contributor rights are unchanged.
+
 A public reference architecture for a provider-neutral, agent-assisted household operating system.
 
 **This repository contains structure and function only. It must never contain real household data.**
@@ -10,8 +15,8 @@ Household OS is a deployment and application layer that consumes sovereign memor
 
 This repository is intentionally separate from:
 
-- **Sovereign Memory Protocol (SMP)** — implementation-neutral custody, provenance, authority, lifecycle, portability, and conformance semantics.
-- **Sovereign Memory Core** — PostgreSQL reference implementation and adversarial/conformance harness for SMP.
+- **Sovereign Memory Protocol (SMP)**: implementation-neutral custody, provenance, authority, lifecycle, portability, and conformance semantics.
+- **Sovereign Memory Core**: PostgreSQL reference implementation and adversarial/conformance harness for SMP.
 
 Household OS is where deployment-specific behavior belongs: virtual Kanban, agent coordination, household event planning, calendar adapters, connector reconciliation, user-facing workflows, and deployment policy.
 
@@ -74,12 +79,12 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 
 ## Architecture documents
 
-- [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
-- [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
-- [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md) — executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
-- [`docs/SKYLIGHT_DISPLAY_BRIDGE.md`](docs/SKYLIGHT_DISPLAY_BRIDGE.md) — official connection handoff and experimental, calendar-only display visibility reconciliation.
-- [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md) — attribution for interface research and permitted derived work.
+- [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md): low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
+- [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md): virtual Kanban, work-item lifecycle, and event-linked preparation work.
+- [`docs/ROADMAP.md`](docs/ROADMAP.md): functional milestones and acceptance gates.
+- [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md): executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
+- [`docs/SKYLIGHT_DISPLAY_BRIDGE.md`](docs/SKYLIGHT_DISPLAY_BRIDGE.md): official connection handoff and experimental, calendar-only display visibility reconciliation.
+- [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md): attribution for interface research and permitted derived work.
 
 Planned documentation also includes agent coordination, authority and approval profiles, connector contracts, and synthetic conformance fixtures.
 
