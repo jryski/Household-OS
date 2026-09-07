@@ -13,6 +13,7 @@ dependencies = []
 
 [project.scripts]
 household-calendar-sync = "household_os.cli:main"
+household-day-brief = "household_os.read_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/household_os"]
