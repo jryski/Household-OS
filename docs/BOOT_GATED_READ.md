@@ -81,6 +81,8 @@ On Windows, if `zoneinfo` cannot resolve a timezone (missing `tzdata`), the comm
 
 On September 7, 2026, all 68 offline unit tests passed on Python 3.13, including the existing calendar/display tests and boot-gated read regressions. Cursor authored the batch; Locutus reviewed it and corrected URL parsing and test patches after Cursor stopped. No production endpoint, household payload, browser or live provider was used in these tests.
 
+A subsequent local-model review identified incomplete nested response validation. Locutus reproduced nine malformed cases, checked the field types against the existing database contract and added strict nested-field checks while retaining documented nulls. All 70 offline tests now pass. Two other model findings were rejected against the code: nonzero manifest drift already fails, and redacting upstream error text is intentional. This local review is not independent security acceptance or live client integration evidence.
+
 This command makes boot mandatory only for calls through this command. It does not force an existing mobile or voice assistant to use it. Wiring an authorized client to this path, testing a real operator invocation and establishing principal-bound authorization remain separate work. The endpoint is explicitly operator-configured, not inferred from a calendar name; a configuration label alone does not attest server identity.
 
 There are no database migrations or production changes in this batch. Success output is sensitive; test with synthetic data before enabling routine use. Missing timezone data is a setup blocker, not permission to install packages automatically.

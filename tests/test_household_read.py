@@ -20,6 +20,7 @@ from household_os.household_read import (
     load_config,
     rpc_function_name,
     validate_boot_response,
+    validate_and_scope_brief,
     validate_date,
     validate_house_origin,
     validate_timezone,
@@ -78,9 +79,9 @@ def valid_brief(
         "channel_open": [],
     }
     if include_nullable_keys:
-        payload["school"] = {"name": "synthetic-school"}
+        payload["school"] = {"in_session": True, "note": None}
         payload["lunch"] = lunch
-        payload["menu_coverage"] = {"status": "not_evaluated"}
+        payload["menu_coverage"] = {"menu_month": "2030-09", "last_date": "2030-09-30", "days_remaining": 20, "stale": False}
     return payload
 
 
@@ -125,6 +126,36 @@ class ScriptedOpener:
 
 
 class HouseholdReadValidationTests(unittest.TestCase):
+    def test_nested_brief_shapes_reject_missing_fields_and_wrong_types(self) -> None:
+        invalid_fields = [
+            ("school", {}),
+            ("school", {"in_session": 1, "note": None}),
+            ("lunch", {}),
+            ("menu_coverage", {}),
+            ("menu_coverage", {"menu_month": None, "last_date": None, "days_remaining": False, "stale": False}),
+            ("events", [{}]),
+            ("events", [{"title": "Synthetic", "category": "demo", "description": 7}]),
+            ("channel_open", [{}]),
+            ("channel_open", [{"seq": True, "from": "agent-demo", "kind": "note", "subject": "Synthetic"}]),
+        ]
+        for field, value in invalid_fields:
+            with self.subTest(field=field, value=value):
+                payload = valid_brief()
+                payload[field] = value
+                with self.assertRaisesRegex(HouseholdReadError, "brief_malformed"):
+                    validate_and_scope_brief(payload, VIEWER, DATE)
+
+    def test_nested_brief_shapes_allow_documented_nulls(self) -> None:
+        payload = valid_brief()
+        payload.update({
+            "school": {"in_session": None, "note": None},
+            "lunch": {"hot": None, "entree_for_our_school": None, "school": None, "cold": None, "cold_source": None},
+            "menu_coverage": {"menu_month": None, "last_date": None, "days_remaining": None, "stale": None},
+            "events": [{"title": "Synthetic", "category": "demo", "description": None}],
+            "channel_open": [{"seq": 1, "from": "agent-demo", "kind": "note", "subject": "Synthetic"}],
+        })
+        self.assertEqual(validate_and_scope_brief(payload, VIEWER, DATE), payload)
+
     def test_validate_date_rejects_bad_format(self) -> None:
         with self.assertRaises(HouseholdReadError) as ctx:
             validate_date("09-10-2030")

@@ -216,6 +216,17 @@ def validate_boot_response(
         raise HouseholdReadError("boot_future")
 
 
+def _validate_brief_fields(
+    value: Any, fields: Mapping[str, tuple[type, ...]]
+) -> None:
+    if not isinstance(value, dict):
+        raise HouseholdReadError("brief_malformed")
+    for name, allowed_types in fields.items():
+        # JSON booleans must not pass an integer check via Python's bool subclass.
+        if name not in value or type(value[name]) not in allowed_types:
+            raise HouseholdReadError("brief_malformed")
+
+
 def validate_and_scope_brief(
     payload: Any, viewer: str, date_str: str
 ) -> dict[str, Any]:
@@ -236,30 +247,40 @@ def validate_and_scope_brief(
             raise HouseholdReadError("brief_malformed")
 
     school = payload.get("school")
-    if school is not None and not isinstance(school, dict):
-        raise HouseholdReadError("brief_malformed")
+    if school is not None:
+        _validate_brief_fields(school, {
+            "in_session": (bool, type(None)), "note": (str, type(None)),
+        })
 
     lunch = payload.get("lunch")
-    if lunch is not None and not isinstance(lunch, dict):
-        raise HouseholdReadError("brief_malformed")
+    if lunch is not None:
+        _validate_brief_fields(lunch, {
+            name: (str, type(None)) for name in
+            ("hot", "entree_for_our_school", "school", "cold", "cold_source")
+        })
 
     events = payload.get("events")
     if not isinstance(events, list):
         raise HouseholdReadError("brief_malformed")
     for event in events:
-        if not isinstance(event, dict):
-            raise HouseholdReadError("brief_malformed")
+        _validate_brief_fields(event, {
+            "title": (str,), "category": (str,), "description": (str, type(None)),
+        })
 
     channel_open = payload.get("channel_open")
     if not isinstance(channel_open, list):
         raise HouseholdReadError("brief_malformed")
     for channel in channel_open:
-        if not isinstance(channel, dict):
-            raise HouseholdReadError("brief_malformed")
+        _validate_brief_fields(channel, {
+            "seq": (int,), "from": (str,), "kind": (str,), "subject": (str,),
+        })
 
     menu_coverage = payload.get("menu_coverage")
-    if menu_coverage is not None and not isinstance(menu_coverage, dict):
-        raise HouseholdReadError("brief_malformed")
+    if menu_coverage is not None:
+        _validate_brief_fields(menu_coverage, {
+            "menu_month": (str, type(None)), "last_date": (str, type(None)),
+            "days_remaining": (int, type(None)), "stale": (bool, type(None)),
+        })
 
     return {
         "viewer": viewer,
