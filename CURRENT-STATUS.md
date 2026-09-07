@@ -6,6 +6,6 @@ Household OS turns permitted long-lived context into household planning, prepara
 
 The public repository contains calendar reconciliation code, synthetic fixtures and deployment guidance. Private operation is not evidence that every fresh assistant can find or use it. A reported session searched the wrong store, skipped startup discovery and incorrectly concluded the household feature was unimplemented.
 
-Current repair: an explicit HOUSE read path that performs startup discovery before a date-scoped day brief, rejects stale or invalid capability information, and reports unavailable coverage instead of global absence. Implementation and tests belong in the related code review. Do not interpret this status update alone as a working mobile integration or deployed fix.
+The repair is published in [draft PR 4](https://github.com/jryski/Household-OS/pull/4): an explicit HOUSE read path performs startup discovery before a date-scoped day brief, rejects stale or invalid capability information, and preserves scoped coverage. All 68 offline tests passed on the local review candidate. It is not merged or deployed. Mobile and voice clients still need an authorized integration with this path; the original field failure is not yet proven resolved.
 
 No real household records, production identifiers or private operational receipts belong here. Viewer filters and shared operator credentials are not principal-bound authorization. Live deployment, multi-user authorization and release acceptance remain separately gated.
