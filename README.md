@@ -74,6 +74,8 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 
 ## Architecture documents
 
+- [`docs/BOOT_GATED_READ.md`](docs/BOOT_GATED_READ.md): operator-only day brief with mandatory startup discovery, scoped coverage and offline regression tests. This does not yet integrate mobile or voice clients.
+
 - [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
