@@ -1,8 +1,7 @@
-Wire Speed Computing LLC
-Copyright 2026 Wire Speed Computing LLC
+Copyright 2026 Jesse Ryski
 
 This product is licensed under the Apache License, Version 2.0.
 See the LICENSE file for the full text.
 
-Where a THIRD_PARTY_NOTICES.md file exists in this repository, it records
-inbound material from other projects and the terms that apply to it.
+docs/THIRD_PARTY_NOTICES.md records inbound material from other projects and
+the terms that apply to it.
