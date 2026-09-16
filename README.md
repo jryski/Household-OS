@@ -86,3 +86,9 @@ Planned documentation also includes agent coordination, authority and approval p
 ## Status
 
 Early implementation work. The first executable slice reconciles canonical HOUSE events to Google Calendar and records provider receipts. A tested experimental adapter can plan or apply Skylight active-calendar visibility without modifying events or unrelated calendars, but sanctioned least-privilege authentication and setup UI remain open. Low-context extraction, recurring automation, and multi-provider conformance remain planned. No production deployment or real household data is represented by this repository.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) and
+[NOTICE](NOTICE). Contributions are accepted under the Developer Certificate of
+Origin. See [DCO.md](DCO.md).
