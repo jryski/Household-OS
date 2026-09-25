@@ -9,6 +9,8 @@ Household OS milestones are accepted through observable behavior and synthetic f
 
 Milestone status values are `foundation`, `planned`, `in_progress`, `acceptance`, and `complete`. A milestone is not `complete` until its documented acceptance gates pass.
 
+Household agent interaction — roles, propose-versus-execute boundaries, and conceptual proposals, approvals, and receipts — is specified in [`AGENT_INTERACTION_CONTRACTS.md`](AGENT_INTERACTION_CONTRACTS.md). That note is domain-scoped. It does not complete HOS-3.
+
 ## Milestones
 
 | Milestone | Status | Outcome |
@@ -96,3 +98,5 @@ HOS-2 turns the HOS-1 contracts into reusable adapter tests. It should include c
 ## HOS-3 preview: governed execution
 
 HOS-3 applies household authority to event-linked work. It should prove that agents and household members can capture and prepare work without silently gaining permission to contact providers, spend money, expose private annotations, approve protected actions, or mark outcomes accepted.
+
+[`AGENT_INTERACTION_CONTRACTS.md`](AGENT_INTERACTION_CONTRACTS.md) is the design note for that household-scoped behavior, including synthetic acceptance checks. Passing HOS-3 still requires executable evidence on a principal-bound data plane. The note does not mark this milestone complete.
