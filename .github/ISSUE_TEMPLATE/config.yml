@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Public-repository rule
+    url: https://github.com/jryski/Household-OS/blob/main/README.md#public-repository-rule
+    about: Read this before opening an issue. Do not include real household data, credentials, or provider IDs.

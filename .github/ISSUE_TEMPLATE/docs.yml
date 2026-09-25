@@ -1,0 +1,50 @@
+name: Docs or planning
+description: Public documentation or planning that stays inside the repository privacy boundary
+title: "docs: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for documentation and planning. Do not paste real household, health, or finance data, credentials, private topology, or provider IDs. Use synthetic identifiers such as `person-1` and `agent-1`.
+
+        Household domain design is owned outside this steward lane (claude-warden). Do not invent ontology in this issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What public doc or planning gap should change?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed doc change
+      description: Files or sections, and what they should say. Stay with structure that is already public unless the domain design owner has specified otherwise.
+    validations:
+      required: true
+  - type: dropdown
+    id: gate
+    attributes:
+      label: Program gate
+      description: Gate C needs separate authorization and is not implied by Gate A or Gate B.
+      options:
+        - Gate A — safe contributor / public docs
+        - Gate B — synthetic read-only reference
+        - Gate C — separately authorized real-user deploy (do not start from this template)
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy checklist
+      options:
+        - label: This issue contains no real HOUSE/VAULT records, personal data, health data, or finance data
+          required: true
+        - label: This issue contains no credentials, private topology, or provider object IDs
+          required: true
+        - label: Examples use synthetic identifiers only (`person-1`, `agent-1`, and similar)
+          required: true
+        - label: I am not claiming an issue labeled `quarantine:privacy` or `bot:do-not-execute`
+          required: true
