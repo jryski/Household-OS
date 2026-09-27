@@ -11,6 +11,8 @@ Milestone status values are `foundation`, `planned`, `in_progress`, `acceptance`
 
 Household agent interaction — roles, propose-versus-execute boundaries, and conceptual proposals, approvals, and receipts — is specified in [`AGENT_INTERACTION_CONTRACTS.md`](AGENT_INTERACTION_CONTRACTS.md). That note is domain-scoped. It does not complete HOS-3.
 
+Telemetry retention and durable-event promotion — what stays short-lived operational state, which transitions become durable events, how staleness is marked, and how repeated failures become trusted troubleshooting history — is specified in [`TELEMETRY_EVENT_PROMOTION.md`](TELEMETRY_EVENT_PROMOTION.md). That note is policy. It does not complete HOS-2, and it does not define the household domain model.
+
 ## Milestones
 
 | Milestone | Status | Outcome |
@@ -94,6 +96,8 @@ HOS-1 reaches acceptance only when synthetic tests demonstrate that:
 ## HOS-2 preview: connector conformance
 
 HOS-2 turns the HOS-1 contracts into reusable adapter tests. It should include capability matrices for at least one full calendar API, one limited/read-only integration, one calendar-feed export, and one household display reached through a calendar provider. The tests must exercise recurrence exceptions, provider rate limits, revoked access, retry backoff, loop prevention, and external deletion or drift.
+
+Connector conformance includes troubleshooting for fabricated retries, revoked access, and drift. [`TELEMETRY_EVENT_PROMOTION.md`](TELEMETRY_EVENT_PROMOTION.md) is the policy for keeping raw telemetry out of durable knowledge, promoting a significant transition only with explicit criteria and provenance, and correcting or superseding that event afterward. Passing HOS-2 still requires executable synthetic fixtures. The note does not mark this milestone complete.
 
 ## HOS-3 preview: governed execution
 
