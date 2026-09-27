@@ -1,0 +1,56 @@
+name: Feature request
+description: Synthetic-safe feature or contract request with an explicit program gate
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the capability in public, synthetic-safe terms. This repository must not receive real household, health, or finance payloads, credentials, private topology, or provider IDs.
+
+        Gates:
+
+        - **A** — safe contributor launch (public docs and scaffolding).
+        - **B** — synthetic read-only reference (fabricated fixtures and contracts; no real-user data plane).
+        - **C** — separately authorized real-user or production-adjacent deploy. Gate C is not implied by A or B and needs its own authorization. Do not treat a feature issue as that authorization.
+
+        Household domain design is owned outside this steward lane (claude-warden). Do not invent ontology here. File the gap; do not casually specify new domain entities.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What public behavior is missing? Use synthetic identifiers only.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Synthetic-safe scope
+      description: What this request includes, and what it explicitly leaves out (live schema, credentials, deploys, real household data).
+    validations:
+      required: true
+  - type: dropdown
+    id: gate
+    attributes:
+      label: Program gate
+      description: Name the gate this request serves. Choosing Gate C records awareness only; it is not authorization to do Gate C work.
+      options:
+        - Gate A — safe contributor / public docs
+        - Gate B — synthetic read-only reference
+        - Gate C — separately authorized real-user deploy (needs separate auth; not started here)
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Scope checks
+      options:
+        - label: Scope is synthetic-safe and does not depend on real HOUSE/VAULT data
+          required: true
+        - label: No credentials, private topology, or provider object IDs are included
+          required: true
+        - label: Gate C work is not claimed from Gate A or Gate B completion
+          required: true
+        - label: I am not claiming an issue labeled `quarantine:privacy` or `bot:do-not-execute`
+          required: true
