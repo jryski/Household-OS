@@ -50,7 +50,7 @@ Google Calendar, Skylight, school systems, mail, and other providers are adapter
 
 Low-friction calendar ingestion is part of that planning surface: setup can optionally configure category delivery targets, dated artifacts can become canonical events with minimal context, and those events can spawn governed preparation work. Provider capability gaps degrade delivery, not canonical intake or Kanban coordination.
 
-See [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md), [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md), and [`docs/ROADMAP.md`](docs/ROADMAP.md).
+See [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md), [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md).
 
 ## Privacy boundary
 
@@ -65,3 +65,5 @@ Only structure, generic policy, synthetic fixtures, and sanitized lessons belong
 ## Agent boundary
 
 Do not broaden SMP or Core to solve household convenience. Do not copy Business OS tables into this repository merely because both deployments need planning. Reuse shared contracts, then implement household-specific semantics here.
+
+Household agent propose-versus-execute boundaries, authority profiles, and conceptual proposal, approval, and receipt vocabulary are specified in [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md). That note does not complete roadmap milestone HOS-3.
