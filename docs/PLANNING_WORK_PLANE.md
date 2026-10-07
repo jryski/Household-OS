@@ -254,6 +254,6 @@ A useful first fixture set should prove:
 
 ## Relationship to the current build board
 
-The private Sovereign AI OS program board in Jesse's Vault is a live build-plane implementation of these general mechanics. Its database rows and real project state do not belong in this public repository.
+The private Sovereign AI OS program board in the maintainers' private Vault is a live build-plane implementation of these general mechanics. Its database rows and real project state do not belong in this public repository.
 
 Portable lessons may be reproduced here only as generic schema, synthetic fixtures, tests, and sanitized design decisions.
