@@ -2,7 +2,39 @@
 
 A public reference architecture for a provider-neutral, agent-assisted household operating system.
 
-**This repository contains structure and function only. It must never contain real household data.**
+**This repository publishes reusable implementation code and synthetic examples. Real household data and deployment credentials must remain private.**
+
+## Implemented calendar delivery
+
+The repository includes runnable connector code alongside synthetic examples.
+The server-side worker reads pending canonical deliveries from the Supabase
+outbox, writes Google Calendar events, and records success or failure receipts.
+
+- [Google adapter](src/household_os/google_calendar.py): derives a stable event
+  ID from the delivery target and canonical event ID; retries reuse that ID.
+- [Outbox repository](src/household_os/supabase_store.py): reads pending
+  deliveries and records results through fixed database functions.
+- [Command-line entry point](src/household_os/cli.py): separates planning from
+  live synchronization; external writes require `sync --live`.
+- [Calendar delivery runbook](docs/DOGFOOD_CALENDAR_SYNC.md): prerequisites,
+  credential alternatives, bounded canary steps, and acceptance checks.
+
+Google HTTP execution and database receipt persistence are separate operations.
+Stable IDs support retry recovery; they do not establish a transaction across
+both systems, complete concurrent-worker safety, or continuous operation.
+
+### Integration paths and requirements
+
+| Path | Requirements and scope |
+| --- | --- |
+| Synthetic tests and examples | Fabricated data and injected test dependencies; real household records and provider credentials stay outside the public test corpus. See [tests](tests/). |
+| Supabase + Google Calendar delivery | A prepared canonical event/delivery schema and server-side Supabase service credential, plus either a short-lived Google access token or Google client ID, client secret, and refresh token. See the [runbook](docs/DOGFOOD_CALENDAR_SYNC.md). |
+| Optional Skylight visibility bridge | A separate experimental path with a short-lived revocable Skylight token after the official calendar connection. It changes calendar visibility, not event content. Google delivery does not require this token. See the [bridge guide](docs/SKYLIGHT_DISPLAY_BRIDGE.md). |
+
+The delivery worker uses server-side service authority. It does not establish
+caller-scoped agent write authorization or the planned proposal/approval
+enforcement. Sanctioned least-privilege Skylight authentication, repeatable
+end-to-end setup, and continuous-operation acceptance remain open.
 
 ## Purpose
 
