@@ -77,12 +77,13 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 - [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md) — household-scoped agent roles, propose-versus-execute boundaries, and conceptual proposals, approvals, and receipts.
+- [`docs/TELEMETRY_EVENT_PROMOTION.md`](docs/TELEMETRY_EVENT_PROMOTION.md) — retention of raw telemetry, promotion of significant transitions into durable events, staleness, and troubleshooting history.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
 - [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md) — executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
 - [`docs/SKYLIGHT_DISPLAY_BRIDGE.md`](docs/SKYLIGHT_DISPLAY_BRIDGE.md) — official connection handoff and experimental, calendar-only display visibility reconciliation.
 - [`docs/THIRD_PARTY_NOTICES.md`](docs/THIRD_PARTY_NOTICES.md) — attribution for interface research and permitted derived work.
 
-Planned documentation also includes connector contracts and broader synthetic conformance fixtures. Household agent coordination and authority and approval profiles are specified in [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md). Enforcement of those profiles remains the HOS-3 milestone.
+Planned documentation also includes connector contracts and broader synthetic conformance fixtures. Household agent coordination and authority and approval profiles are specified in [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md). Enforcement of those profiles remains the HOS-3 milestone. Telemetry retention and durable-event promotion are specified in [`docs/TELEMETRY_EVENT_PROMOTION.md`](docs/TELEMETRY_EVENT_PROMOTION.md). That note does not complete HOS-2, and the household domain model remains a separate design.
 
 ## Status
 
