@@ -58,15 +58,17 @@ connector without true all-day events uses the same-day 11:59 PM fallback;
 invalid canonical rows are rejected before any provider call; and summaries
 carry counts only.
 
-The in-memory outbox follows the pending rule described in this runbook. It is
-not the deployed `calendar_delivery_outbox` view, so a passing sample run does
+The in-memory outbox follows the pending rule described in this runbook, and the
+provider is a fake that records requests. Neither is the deployed
+`calendar_delivery_outbox` view or Google Calendar, so a passing sample run does
 not prove a deployment. Continue with the prerequisites below for that.
 
-The full synthetic unit suite, which CI runs on every pull request:
+The full synthetic component suite (29 tests), which the
+[unit-test workflow](../.github/workflows/unit-tests.yml) runs on every pull
+request and on `main`:
 
 ```text
-python -m unittest -v tests.test_calendar_sync tests.test_supabase_store \
-  tests.test_skylight_display tests.test_calendar_sample_fixture
+python -m unittest discover -s tests -v
 ```
 
 ## Prerequisites

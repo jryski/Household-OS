@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: Apache-2.0
+# Synthetic component tests on every pull request and on main. Fabricated data
+# and in-memory stand-ins only: no database, provider credential, secret or
+# network delivery. Installs the package into a fresh virtual environment, then
+# runs the provider-free calendar sample and the full component suite. A skipped
+# test, a missing suite or a zero-test run fails the job.
+name: Unit tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unit-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  component-tests:
+    name: Component tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install into a fresh virtual environment
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install --disable-pip-version-check --no-cache-dir .
+
+      - name: Provider-free calendar sample and full component suite
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          "$RUNNER_TEMP/venv/bin/python" - <<'PY'
+          import sys, unittest
+          def run(suite, label):
+              result = unittest.TextTestRunner(verbosity=2).run(suite)
+              print(f"{label}: run={result.testsRun} failures={len(result.failures)} "
+                    f"errors={len(result.errors)} skipped={len(result.skipped)}")
+              return result
+          loader = unittest.defaultTestLoader
+          sample = run(loader.loadTestsFromName("tests.test_calendar_sample_fixture"), "calendar sample")
+          full = run(loader.discover("tests", pattern="test_*.py"), "component suite")
+          bad = [r for r in (sample, full) if not r.wasSuccessful() or r.skipped or r.testsRun == 0]
+          if bad or full.testsRun < sample.testsRun:
+              sys.exit(1)
+          PY
