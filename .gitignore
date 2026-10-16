@@ -12,3 +12,5 @@ build/
 dist/
 *.egg-info/
 dogfood-output/
+node_modules/
+supabase/.temp/

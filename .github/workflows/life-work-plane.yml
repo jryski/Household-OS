@@ -1,0 +1,28 @@
+name: Life work plane
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/*life_assistance*'
+      - 'scripts/test_life_work_plane.mjs'
+      - 'package*.json'
+      - '.github/workflows/life-work-plane.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/*life_assistance*'
+      - 'scripts/test_life_work_plane.mjs'
+      - 'package*.json'
+      - '.github/workflows/life-work-plane.yml'
+permissions:
+  contents: read
+jobs:
+  postgres-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: npm ci --ignore-scripts
+      - run: npm run test:life-db
+      - run: PYTHONPATH=src python3 -m unittest discover -s tests -v
