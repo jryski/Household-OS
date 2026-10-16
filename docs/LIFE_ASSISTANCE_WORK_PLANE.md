@@ -3,7 +3,7 @@
 Implements the existing planning objects from `PLANNING_WORK_PLANE.md` without
 introducing a person, asset, medical, or financial ontology. Tracked in issue #35.
 
-The portable migration adds boards, proposed work, source links, dependencies,
+The portable migrations add boards, proposed work, source links, dependencies,
 append-only activity, permitted source signals, configurable routines, and bounded
 agent check-ins. References point back to existing records in their original trust
 domains. Private records must not be copied into shared descriptions or signals.

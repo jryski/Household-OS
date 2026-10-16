@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 
 const db = new PGlite();
@@ -31,12 +31,18 @@ async function signal(key,kind,keys,board='board-demo',until=null) {
 }
 try {
   await db.exec('create role anon; create role authenticated; create role service_role bypassrls;');
-  await db.exec(await readFile(new URL('../supabase/migrations/20261016111304_life_assistance_work_plane.sql',import.meta.url),'utf8'));
+  const migrations = new URL('../supabase/migrations/',import.meta.url);
+  for(const path of (await readdir(migrations)).filter(p=>p.includes('life_assistance')).sort()) {
+    await db.exec(await readFile(new URL(path,migrations),'utf8'));
+  }
   console.log(`# ${await value('select version()')}`);
   check('all eight tables have RLS',Number(await value(`select count(*) from pg_class c
     join pg_namespace n on n.oid=c.relnamespace where n.nspname='life_ops' and c.relkind='r' and c.relrowsecurity`)),8);
   check('all RPCs use invoker security',await value(`select bool_and(not prosecdef) from pg_proc
     where proname like 'life_%_v1'`));
+  check('composite foreign keys have covering indexes',Number(await value(`select count(*) from pg_indexes
+    where schemaname='life_ops' and indexname in
+    ('activity_board_item','dependencies_board_item','dependencies_board_required')`)),3);
   for(const denied of ['anon','authenticated']) {
     check(`${denied} cannot use internal schema`,await value(`select has_schema_privilege($1,'life_ops','usage')`,[denied]),false);
     check(`${denied} cannot call any work-plane RPC`,Number(await value(`select count(*) from pg_proc p
