@@ -1,0 +1,20 @@
+{
+  "_comment": "Fabricated calendar delivery rows for the provider-free sample route. Every value is invented; no household, provider or calendar identifier is real. canonical_hash is computed by the test from the other fields.",
+  "defaults": {
+    "description": "Synthetic fixture",
+    "start_time": null,
+    "end_time": null,
+    "all_day": true,
+    "timezone": "America/Detroit",
+    "location": null,
+    "provider": "google",
+    "external_calendar_ref": "calendar-demo",
+    "external_event_id": null
+  },
+  "rows": [
+    {"n": 1, "title": "Lunch — synthetic menu 1", "category_key": "school.lunch", "target_key": "gcal-school-lunch", "start_date": "2030-09-10", "end_date": "2030-09-10"},
+    {"n": 2, "title": "Lunch — synthetic menu 2", "category_key": "school.lunch", "target_key": "gcal-school-lunch", "start_date": "2030-09-11", "end_date": "2030-09-11"},
+    {"n": 3, "title": "Lunch — synthetic menu 3", "category_key": "school.lunch", "target_key": "gcal-school-lunch", "start_date": "2030-09-12", "end_date": "2030-09-12"},
+    {"n": 4, "title": "Synthetic evening meeting", "category_key": "school.pto_meeting", "target_key": "gcal-school-pto-meeting", "start_date": "2030-09-13", "end_date": "2030-09-13", "all_day": false, "start_time": "18:00:00"}
+  ]
+}

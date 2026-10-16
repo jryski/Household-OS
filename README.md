@@ -36,6 +36,24 @@ caller-scoped agent write authorization or the planned proposal/approval
 enforcement. Sanctioned least-privilege Skylight authentication, repeatable
 end-to-end setup, and continuous-operation acceptance remain open.
 
+## Orientation: purpose, place and first test
+
+A short map for people and AI assistants arriving here first. Each row links
+the source that supports it.
+
+| Question | Answer |
+| --- | --- |
+| What is this? | The household application layer: events, planning, agent coordination and provider reconciliation. The first executable slice reconciles canonical household events to Google Calendar and records provider receipts ([purpose](#purpose), [status](#status)). |
+| Where does it fit? | A household-domain application in the [Sovereign AI OS program map](https://github.com/WireSpeedComputing/sovereign-ai-os) ([component routes](https://github.com/WireSpeedComputing/sovereign-ai-os/blob/main/ROUTES.md), [program role](PROGRAM-ROLE.md)). It consumes memory and custody capabilities without redefining them. [Sovereign Vault](https://github.com/WireSpeedComputing/Sovereign-Vault) is a separate business application with its own records and permissions; it is not the principal-private VAULT trust domain named in [PROGRAM-ROLE.md](PROGRAM-ROLE.md#privacy-boundary). No install order across components is implied. |
+| What is supported today? | Early implementation. Live delivery needs a prepared Supabase schema, a server-side service credential and Google credentials ([runbook prerequisites](docs/DOGFOOD_CALENDAR_SYNC.md#prerequisites)). The base event, target, link and outbox tables are described in [IMAGE_CALENDAR_INTAKE.md](docs/IMAGE_CALENDAR_INTAKE.md); the migrations here add only the worker receipt and lunch-query functions ([supabase/migrations](supabase/migrations)). |
+| First test (no provider) | The [provider-free sample route](docs/DOGFOOD_CALENDAR_SYNC.md#start-without-a-provider-fabricated-sample-data) runs the reconciliation code over [fabricated outbox rows](tests/fixtures/calendar_sample_outbox.json) with in-memory stand-ins: after `pip install .` ([pyproject.toml](pyproject.toml)), run `python -m unittest -v tests.test_calendar_sample_fixture`. It covers planning, a one-item canary, failure isolation and retry, idempotent rerun, in-place update, lost-receipt recovery and input rejection. The CLI itself has no provider-free mode: `sync` refuses to run without `--live`, and `plan` needs the server-side environment ([cli.py](src/household_os/cli.py), [supabase_store.py](src/household_os/supabase_store.py)). |
+| Provider-connected trial | A separate operator path with its own isolated calendar, credentials and explicit authorization ([runbook](docs/DOGFOOD_CALENDAR_SYNC.md), [Skylight bridge](docs/SKYLIGHT_DISPLAY_BRIDGE.md)). |
+| Evidence | Code and synthetic tests in this repository. The [unit-test workflow](.github/workflows/unit-tests.yml) runs the calendar, store, display and sample suites on every pull request; the [leak gate](.github/workflows/leak-gate.yml) scans changes. The sample route does not prove the deployed outbox view. |
+| Limitations | Low-context extraction, recurring automation and multi-provider conformance are planned; least-privilege Skylight authentication and setup UI are open ([status](#status)). |
+| Contribute | [CONTRIBUTING.md](CONTRIBUTING.md) (issue first, synthetic data only), DCO sign-off ([DCO.md](DCO.md)). |
+| License and security | Apache-2.0 ([LICENSE](LICENSE), [NOTICE](NOTICE)). This repository has no SECURITY.md yet. Do not post sensitive details publicly; use the program's private route in [sovereign-ai-os SECURITY.md](https://github.com/WireSpeedComputing/sovereign-ai-os/blob/main/SECURITY.md). |
+| Related components | [Supabase User MCP](https://github.com/jryski/Supabase_user_MCP) (principal-bound access before multi-principal use is trusted), [Sovereign Memory Core](https://github.com/jryski/sovereign-memory-core), [Sovereign Memory Protocol](https://github.com/jryski/sovereign-memory-protocol). No other component is a prerequisite for the unit tests above; adopt components independently and in any order. |
+
 ## Purpose
 
 Household OS is a deployment and application layer that consumes sovereign memory and custody capabilities without redefining them. It coordinates household work, events, projects, agents, and provider integrations while preserving explicit authority and privacy boundaries.

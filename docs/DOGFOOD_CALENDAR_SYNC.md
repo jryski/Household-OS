@@ -35,6 +35,40 @@ Google is a delivery copy. HOUSE remains canonical for meal content, source evid
 - Output reports counts only; it does not print event titles, provider IDs, or household content.
 - A service-role-only `get_household_lunch(date, timezone)` function gives authorized agents a canonical HOUSE query path.
 
+## Start without a provider: fabricated sample data
+
+Before preparing a deployment, run the same reconciliation code over fabricated
+outbox rows with in-memory stand-ins for Google and the outbox. No Supabase
+project, Google account, or credential is used.
+
+```text
+python -m pip install .
+python -m unittest -v tests.test_calendar_sample_fixture
+```
+
+The sample rows are in
+[`tests/fixtures/calendar_sample_outbox.json`](../tests/fixtures/calendar_sample_outbox.json).
+The suite checks, in order: planning makes no provider call; a one-item canary
+creates one private, transparent, reminder-free all-day event with an exclusive
+end date; a provider failure is isolated, bounded, and retried; a rerun creates
+nothing; a canonical change updates the same event; a lost receipt is recovered
+through the deterministic ID (HTTP 409, then update) without a duplicate; a
+start-only timed event receives the provider-only 60-minute rendering; a
+connector without true all-day events uses the same-day 11:59 PM fallback;
+invalid canonical rows are rejected before any provider call; and summaries
+carry counts only.
+
+The in-memory outbox follows the pending rule described in this runbook. It is
+not the deployed `calendar_delivery_outbox` view, so a passing sample run does
+not prove a deployment. Continue with the prerequisites below for that.
+
+The full synthetic unit suite, which CI runs on every pull request:
+
+```text
+python -m unittest -v tests.test_calendar_sync tests.test_supabase_store \
+  tests.test_skylight_display tests.test_calendar_sample_fixture
+```
+
 ## Prerequisites
 
 The deployment must already contain the canonical event and delivery tables documented in [`IMAGE_CALENDAR_INTAKE.md`](IMAGE_CALENDAR_INTAKE.md). Apply the migration in `supabase/migrations` to add the worker receipts and lunch query contract.
