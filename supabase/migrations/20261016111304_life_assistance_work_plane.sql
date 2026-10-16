@@ -92,8 +92,9 @@ create index activity_board on life_ops.activity(board_id,id);
 create index activity_item on life_ops.activity(item_id,id);
 
 -- Signals contain permitted matching keys and source locators, not raw private records.
+create sequence life_ops.signal_id_seq as bigint;
 create table life_ops.signals (
-  id bigint generated always as identity primary key,
+  id bigint primary key,
   board_id uuid not null references life_ops.boards(id),
   signal_key text not null check (length(btrim(signal_key)) between 1 and 500),
   kind text not null check (length(btrim(kind)) between 1 and 120),
@@ -170,6 +171,9 @@ begin
   if exists(select 1 from unnest(new.match_keys) k
     where k is null or length(btrim(k)) not between 1 and 300) then
     raise exception 'life_ops: invalid matching keys' using errcode='22023'; end if;
+  -- Allocate after the board lock, including direct trusted-server inserts.
+  -- Identity/default nextval would allocate before the BEFORE trigger's lock.
+  new.id:=nextval('life_ops.signal_id_seq'::regclass);
   return new;
 end $$;
 create trigger serialize_signal before insert on life_ops.signals

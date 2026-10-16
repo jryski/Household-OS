@@ -77,6 +77,7 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 - [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md) — household-scoped agent roles, propose-versus-execute boundaries, and conceptual proposals, approvals, and receipts.
+- [`docs/LIFE_ASSISTANCE_WORK_PLANE.md`](docs/LIFE_ASSISTANCE_WORK_PLANE.md) — server-only database implementation of evidence-linked work, routines, signals, and bounded agent check-ins; individual agent/broker integration remains separate.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
 - [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md) — executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
 - [`docs/SKYLIGHT_DISPLAY_BRIDGE.md`](docs/SKYLIGHT_DISPLAY_BRIDGE.md) — official connection handoff and experimental, calendar-only display visibility reconciliation.

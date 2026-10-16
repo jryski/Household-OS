@@ -61,3 +61,14 @@ clamp invalid month-end dates (including leap day) to that month's last day.
 
 Never register a broad service-role key as an agent's credential. Connecting an
 agent requires operation and board allowlists and verified identity in the broker.
+
+## Verification
+
+Run `npm ci --ignore-scripts` followed by `npm run test:life-db`. The test harness
+uses pinned PGlite PostgreSQL 17 and synthetic data in an ephemeral local database.
+It exercises permission denial, proposal idempotency, decision separation, leases,
+dependencies, append-only history, bounded cursors, seasonal dates, routine
+coalescing, and conservative recall matches. It does not simulate independent
+PostgreSQL sessions; real concurrent-session races remain a separate deployment
+qualification check. Run the existing Python suite with
+`PYTHONPATH=src python -m unittest discover -s tests -v`.
