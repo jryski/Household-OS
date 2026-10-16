@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Private security report
+    url: https://github.com/jryski/Household-OS/security/advisories/new
+    about: Report vulnerabilities privately (fallback in SECURITY.md). Do not put exploit details in a public issue.
   - name: Public-repository rule
     url: https://github.com/jryski/Household-OS/blob/main/README.md#public-repository-rule
     about: Read this before opening an issue. Do not include real household data, credentials, or provider IDs.
