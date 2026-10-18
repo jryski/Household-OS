@@ -61,7 +61,14 @@ jobs:
           loader = unittest.defaultTestLoader
           sample = run(loader.loadTestsFromName("tests.test_calendar_sample_fixture"), "calendar sample")
           full = run(loader.discover("tests", pattern="test_*.py"), "component suite")
+          # unittest discovery silently drops modules it cannot reach (for example
+          # tests/leak has no __init__.py and is covered by leak-ci.yml). Require
+          # every top-level tests/test_*.py module to contribute at least one test.
+          import pathlib
+          missing = [p.stem for p in sorted(pathlib.Path("tests").glob("test_*.py"))
+                     if loader.loadTestsFromName(f"tests.{p.stem}").countTestCases() == 0]
+          print(f"component modules missing tests: {missing}")
           bad = [r for r in (sample, full) if not r.wasSuccessful() or r.skipped or r.testsRun == 0]
-          if bad or full.testsRun < sample.testsRun:
+          if bad or missing or full.testsRun < sample.testsRun:
               sys.exit(1)
           PY
