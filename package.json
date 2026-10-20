@@ -2,6 +2,9 @@
   "name": "household-os-database-tests",
   "private": true,
   "type": "module",
-  "scripts": { "test:life-db": "node scripts/test_life_work_plane.mjs" },
+  "scripts": {
+    "test:life-db": "node scripts/test_life_work_plane.mjs",
+    "test:life-runtime": "node scripts/test_life_runtime_adapter.mjs"
+  },
   "devDependencies": { "@electric-sql/pglite": "0.3.14" }
 }

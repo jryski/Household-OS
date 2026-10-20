@@ -3,14 +3,18 @@ on:
   pull_request:
     paths:
       - 'supabase/migrations/*life_assistance*'
+      - 'supabase/migrations/*life_runtime*'
       - 'scripts/test_life_work_plane.mjs'
+      - 'scripts/test_life_runtime_adapter.mjs'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/migrations/*life_assistance*'
+      - 'supabase/migrations/*life_runtime*'
       - 'scripts/test_life_work_plane.mjs'
+      - 'scripts/test_life_runtime_adapter.mjs'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
 permissions:
@@ -25,4 +29,5 @@ jobs:
           persist-credentials: false
       - run: npm ci --ignore-scripts
       - run: npm run test:life-db
+      - run: npm run test:life-runtime
       - run: PYTHONPATH=src python3 -m unittest discover -s tests -v

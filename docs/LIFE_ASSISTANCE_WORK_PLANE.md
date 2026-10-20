@@ -19,6 +19,11 @@ Actor strings record attribution only. They do not authenticate a principal.
 Connecting individual agents or household users requires an independently tested
 principal-bound broker adapter. This change does not claim the HOS-3 milestone.
 
+The optional [authenticated runtime adapter](LIFE_RUNTIME_ADAPTER.md) supplies
+disabled-by-default grant-bound context, check-in, research claim and submission
+wrappers. Its source and synthetic tests do not activate a deployed agent or
+the human acceptance path.
+
 Only the administrative decision path can accept work or record an accepted
 outcome. The service role can submit proposals and research results, but cannot
 grant itself acceptance, alter board policy, or call the decision RPC. No function
