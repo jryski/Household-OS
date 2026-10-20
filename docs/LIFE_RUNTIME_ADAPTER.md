@@ -87,7 +87,10 @@ The broker still enforces its complete response-frame budget.
 Unknown or unauthorized grant/item, wrong subject/client/board/operation,
 disabled board, and expired or revoked authority return a generic `42501`
 denial. Invalid bounds return `22023`. Unclaimable or invalid/consumed leases
-return `55000`. A response-budget failure returns `54000`. Neither a finding
+return `PT409` from the public facades, which PostgREST maps to HTTP 409. Internal
+base APIs retain `55000`. Only that known rolled-back lease conflict is remapped;
+unexpected server errors remain failures with uncertain-result handling. Bounds
+`22023` map to HTTP 400; response-budget failures retain `54000`. Neither a finding
 nor a successful submission is an accepted household outcome.
 
 Claim and submit retain the base API's non-replayable lease semantics. A lost
@@ -112,12 +115,26 @@ precreates only the two owned namespaces and omits their exact CREATE SCHEMA
 statements; every other migration statement executes unchanged. Full PostgreSQL
 namespace creation is still an acceptance requirement.
 
-These tests do not qualify concurrent
-session contention, JWT verification, a broker release, live grants, independent
-review or deployment. Before activation, inspect the target auth helpers and
-API schema configuration, apply to a disposable full PostgreSQL environment,
-test independent-session claim/revocation races, review a specific grant and
-broker binding, and retain exact-source and rollback receipts privately.
+The same runner supports native PostgreSQL 17. Set `LIFE_RUNTIME_DATABASE_URL`
+to a fresh, isolated database named `life_acceptance` or `life_runtime_fixture`
+on loopback, and `LIFE_RUNTIME_POSTGRES_ACK=synthetic-disposable`. Authentication
+credentials belong in the environment, not source or logs. This mode executes
+the exact migration files unchanged with a real non-superuser CREATEROLE
+installer lacking auth-schema grant options. It also opens two independent
+connections, races claims, observes actual database lock blockers during
+revocation, and proves both operation-first and revocation-first ordering.
+It does not reset an existing database. Use a fresh disposable instance per run.
+
+The GitHub Actions `PostgreSQL 17 runtime and contention` job runs that native
+mode using the same immutable official PostgreSQL 17 image digest retained in
+its service definition. The PGlite job remains the fast path. Synthetic goldens
+can be exported with `LIFE_RUNTIME_FIXTURE_OUTPUT` for cross-component schema
+checks; they contain only fabricated fixture data.
+
+Neither backend verifies cryptographic JWTs, a broker release, live grants,
+independent review or deployment. Before activation, inspect the target auth
+helpers and API schema configuration, review a specific grant and broker
+binding, and retain exact-source and rollback receipts privately.
 
 For safe disable, an administrator disables or revokes the new grant. Existing
 calendar and memory paths remain available. Do not remove base work-plane
@@ -127,3 +144,8 @@ References checked for this implementation:
 [Supabase function security](https://supabase.com/docs/guides/database/functions),
 [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), and
 [PostgreSQL function security](https://www.postgresql.org/docs/current/sql-createfunction.html).
+Native harness references:
+[node-postgres Client](https://node-postgres.com/apis/client),
+[PostgreSQL 17 GRANT](https://www.postgresql.org/docs/17/sql-grant.html),
+[locking](https://www.postgresql.org/docs/17/explicit-locking.html), and
+[PostgREST error mapping](https://docs.postgrest.org/en/stable/references/errors.html).

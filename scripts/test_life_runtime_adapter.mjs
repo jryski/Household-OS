@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile,writeFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
+import { openPostgres,qualifyConcurrency } from './life_runtime_postgres.mjs';
 
 // auth shims exercise SQL authorization only. They do not verify JWT signatures,
-// broker grant custody, independent-session contention, or a live deployment.
-const db = new PGlite();
+// broker grant custody or a live deployment. Optional native PostgreSQL mode
+// executes exact migrations and qualifies independent-session contention.
+const db = await openPostgres() ?? new PGlite();
 let count = 0;
 const query = (sql, args = []) => db.query(sql, args);
 const value = async (sql, args = []) => Object.values((await query(sql, args)).rows[0])[0];
@@ -52,11 +54,13 @@ try {
     grant usage on schema auth to fixture_installer;
     grant select on auth.sessions to fixture_installer;
     grant create on schema public to fixture_installer;`);
-  // PGlite cannot GRANT database ACLs (XX000 tuple concurrently deleted).
-  // Precreate only the two owned namespaces; every remaining migration statement
-  // runs unchanged under a non-superuser CREATEROLE installer without auth grant
-  // options. Full PostgreSQL schema creation remains a separate acceptance check.
-  await db.exec('create schema life_ops authorization fixture_installer; create schema life_runtime authorization fixture_installer;');
+  if(db.native) {
+    await db.exec("do $$ begin execute format('grant create on database %I to fixture_installer',current_database()); end $$;");
+  } else {
+    // PGlite cannot GRANT database ACLs (XX000 tuple concurrently deleted).
+    // Native PostgreSQL uses unchanged migrations and actual CREATE privileges.
+    await db.exec('create schema life_ops authorization fixture_installer; create schema life_runtime authorization fixture_installer;');
+  }
   await db.exec('set role fixture_installer');
   for (const name of [
     '20261016111304_life_assistance_work_plane.sql',
@@ -64,10 +68,10 @@ try {
     '20261020130357_life_runtime_adapter.sql',
   ]) {
     const sql=await readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
-    await db.exec(sql.replace(/^create schema (life_ops|life_runtime);$/gm,''));
+    await db.exec(db.native?sql:sql.replace(/^create schema (life_ops|life_runtime);$/gm,''));
   }
   await admin();
-  check('non-superuser installer applied SQL after fixture namespace creation',await value("select not rolsuper from pg_roles where rolname='fixture_installer'"));
+  check(db.native?'non-superuser installer applied exact unchanged migrations':'non-superuser installer applied SQL after fixture namespace creation',await value("select not rolsuper from pg_roles where rolname='fixture_installer'"));
   check('temporary executor SET and INHERIT removed',await value("select not pg_has_role('fixture_installer','life_runtime_executor','set') and not pg_has_role('fixture_installer','life_runtime_executor','usage')"));
   check('temporary executor schema CREATE removed',await value("select has_schema_privilege('life_runtime_executor','life_runtime','create')"),false);
   check('executor has no auth schema usage',await value("select has_schema_privilege('life_runtime_executor','auth','usage')"),false);
@@ -178,11 +182,11 @@ try {
   await caller(); await denied('revocation after claim prevents submission',calls()[3][0],calls()[3][1]);
   await admin(); await query('update life_runtime.principal_grants set revoked_at=null where id=$1',[grant]);
   await caller();
-  await denied('wrong lease token rejected',calls()[3][0],[grant,item,'00000000-0000-4000-8000-000000000098'],'55000');
+  await denied('wrong lease token rejected',calls()[3][0],[grant,item,'00000000-0000-4000-8000-000000000098'],'PT409');
   const submitted=await value(calls()[3][0],calls()[3][1]);
   check('submission response carries verified scope',submitted.scope,context.scope);
   check('submission response explicitly ends at review',submitted.state,'review');
-  await denied('consumed submission cannot replay',calls()[3][0],calls()[3][1],'55000');
+  await denied('consumed submission cannot replay',calls()[3][0],calls()[3][1],'PT409');
   await admin();
   check('submission stops at review',await value('select state from life_ops.work_items where id=$1',[item]),'review');
   check('submission cannot fabricate accepted outcome',await value('select outcome_ref from life_ops.work_items where id=$1',[item]),null);
@@ -190,8 +194,15 @@ try {
   await denied('executor cannot call human decision',"select public.life_decide_work_v1($1,4,'done','forged:decision','forged:outcome')",[item]);
   await denied('executor cannot rewrite board policy','update life_ops.boards set enabled=false where id=$1',[board]);
   await denied('executor cannot rewrite delegation','update life_runtime.principal_grants set revoked_at=now() where id=$1',[grant]);
+  if(db.native) {
+    await admin();
+    check('installer has no auth schema grant option',await value("select has_schema_privilege('fixture_installer','auth','usage with grant option')"),false);
+    await qualifyConcurrency({db,claims,grant,board,check});
+  }
   await admin(); await query('update life_ops.boards set enabled=false where id=$1',[board]);
   await denyEvery('disabled board');
+  if(process.env.LIFE_RUNTIME_FIXTURE_OUTPUT) await writeFile(process.env.LIFE_RUNTIME_FIXTURE_OUTPUT,
+    JSON.stringify({context,checkin,claim:lease,submit:submitted},null,2)+'\n');
   console.log(`1..${count}`);
 } catch (error) {
   console.error(`${error.code ?? error.name}: ${error.message}\n${error.where ?? ''}`);

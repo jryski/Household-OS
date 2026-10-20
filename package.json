@@ -6,5 +6,8 @@
     "test:life-db": "node scripts/test_life_work_plane.mjs",
     "test:life-runtime": "node scripts/test_life_runtime_adapter.mjs"
   },
-  "devDependencies": { "@electric-sql/pglite": "0.3.14" }
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
+    "pg": "8.23.1"
+  }
 }

@@ -303,13 +303,23 @@ language sql security invoker set search_path='' as $$
   select life_runtime.check_in(p_grant_id,p_evidence_ref,p_after_signal,p_limit)
 $$;
 create function public.life_runtime_claim_work_v1(p_grant_id uuid,p_item_id uuid,p_lease_seconds integer default 300)
-returns jsonb language sql security invoker set search_path='' as $$
-  select life_runtime.claim(p_grant_id,p_item_id,p_lease_seconds)
+returns jsonb language plpgsql security invoker set search_path='' as $$
+begin
+  return life_runtime.claim(p_grant_id,p_item_id,p_lease_seconds);
+exception when sqlstate '55000' then
+  -- PostgREST maps 55xxx to HTTP 500. A known rolled-back lease conflict is
+  -- HTTP 409; unexpected exceptions keep their original failure semantics.
+  raise exception 'life runtime: work lease conflict' using errcode='PT409';
+end
 $$;
 create function public.life_runtime_submit_work_v1(p_grant_id uuid,p_item_id uuid,p_lease_token uuid,
   p_finding_ref text,p_blocked boolean default false) returns jsonb
-language sql security invoker set search_path='' as $$
-  select life_runtime.submit(p_grant_id,p_item_id,p_lease_token,p_finding_ref,p_blocked)
+language plpgsql security invoker set search_path='' as $$
+begin
+  return life_runtime.submit(p_grant_id,p_item_id,p_lease_token,p_finding_ref,p_blocked);
+exception when sqlstate '55000' then
+  raise exception 'life runtime: work lease conflict' using errcode='PT409';
+end
 $$;
 
 do $$ declare f record; begin
