@@ -4,6 +4,25 @@ A public reference architecture for a provider-neutral, agent-assisted household
 
 **This repository contains structure and function only. It must never contain real household data.**
 
+
+## Orientation for people and AI assistants
+
+Each row links the source that supports it. Gaps are stated rather than filled in.
+
+| Question | Where to look |
+| --- | --- |
+| Purpose | [Purpose](#purpose) |
+| Relationships | [program map](https://github.com/WireSpeedComputing/sovereign-ai-os) ([component routes](https://github.com/WireSpeedComputing/sovereign-ai-os/blob/main/ROUTES.md)); [PROGRAM-ROLE.md](PROGRAM-ROLE.md) |
+| Prerequisites | Git and Python 3.11 or later; no third-party packages (`dependencies = []` in [pyproject.toml](pyproject.toml)). Use synthetic household data only ([Public-repository rule](#public-repository-rule)). |
+| Exact commands | `git clone https://github.com/jryski/Household-OS.git`, `cd Household-OS`, `PYTHONPATH=src python3 -m unittest discover -s tests`. Without `PYTHONPATH=src` the tests fail to import `household_os`. |
+| Allowed / denied results | Allowed: the unit tests report `OK`. Denied: the leak gate ([leak-gate.yml](.github/workflows/leak-gate.yml)) blocks a pull request that adds a credential or private-data pattern. |
+| Cleanup | Delete the disposable checkout and any `__pycache__` directories. The tests use no network or database. |
+| Evidence | [leak-gate workflow](.github/workflows/leak-gate.yml); [Status](#status). |
+| Limits | [System boundary](#system-boundary), [Status](#status), [docs/ROADMAP.md](docs/ROADMAP.md). |
+| License | [License](#license), [LICENSE](LICENSE), [NOTICE](NOTICE). |
+| Contribute | [CONTRIBUTING.md](CONTRIBUTING.md), [DCO.md](DCO.md) |
+| Security | This repository's [private reporting form](https://github.com/jryski/Household-OS/security/advisories/new); details in [SECURITY.md](SECURITY.md). |
+
 ## Purpose
 
 Household OS is a deployment and application layer that consumes sovereign memory and custody capabilities without redefining them. It coordinates household work, events, projects, agents, and provider integrations while preserving explicit authority and privacy boundaries.
