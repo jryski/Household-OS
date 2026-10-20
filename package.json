@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test:life-db": "node scripts/test_life_work_plane.mjs",
-    "test:life-runtime": "node scripts/test_life_runtime_adapter.mjs"
+    "test:life-runtime": "node scripts/test_life_runtime_adapter.mjs",
+    "test:life-runtime-config": "node --test scripts/test_life_runtime_postgres_config.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",

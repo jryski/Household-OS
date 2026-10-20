@@ -117,7 +117,9 @@ namespace creation is still an acceptance requirement.
 
 The same runner supports native PostgreSQL 17. Set `LIFE_RUNTIME_DATABASE_URL`
 to a fresh, isolated database named `life_acceptance` or `life_runtime_fixture`
-on loopback, and `LIFE_RUNTIME_POSTGRES_ACK=synthetic-disposable`. Authentication
+on loopback, and `LIFE_RUNTIME_POSTGRES_ACK=synthetic-disposable`. URL queries
+and fragments are rejected before loading the driver, including PostgreSQL
+connection-string options that could override the validated target. Authentication
 credentials belong in the environment, not source or logs. This mode executes
 the exact migration files unchanged with a real non-superuser CREATEROLE
 installer lacking auth-schema grant options. It also opens two independent

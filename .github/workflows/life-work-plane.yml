@@ -7,6 +7,7 @@ on:
       - 'scripts/test_life_work_plane.mjs'
       - 'scripts/test_life_runtime_adapter.mjs'
       - 'scripts/life_runtime_postgres.mjs'
+      - 'scripts/test_life_runtime_postgres_config.mjs'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
   push:
@@ -17,6 +18,7 @@ on:
       - 'scripts/test_life_work_plane.mjs'
       - 'scripts/test_life_runtime_adapter.mjs'
       - 'scripts/life_runtime_postgres.mjs'
+      - 'scripts/test_life_runtime_postgres_config.mjs'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
 permissions:
@@ -32,6 +34,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:life-db
       - run: npm run test:life-runtime
+      - run: npm run test:life-runtime-config
       - run: PYTHONPATH=src python3 -m unittest discover -s tests -v
   postgres-runtime:
     name: PostgreSQL 17 runtime and contention
@@ -54,6 +57,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - run: npm ci --ignore-scripts
+      - run: npm run test:life-runtime-config
       - name: Exact migrations and independent session races
         env:
           LIFE_RUNTIME_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/life_acceptance

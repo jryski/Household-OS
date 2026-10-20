@@ -1,19 +1,28 @@
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
 
-export async function openPostgres() {
-  const target = process.env.LIFE_RUNTIME_DATABASE_URL;
-  if (!target) return null;
-  if (process.env.LIFE_RUNTIME_POSTGRES_ACK !== 'synthetic-disposable') {
+export function validatePostgresTarget(target,ack) {
+  if (ack !== 'synthetic-disposable') {
     throw new Error('PostgreSQL qualification requires the synthetic-disposable acknowledgement');
   }
-  const url = new URL(target);
+  let url;
+  try { url=new URL(target); } catch { throw new Error('Invalid synthetic PostgreSQL target'); }
   if (!['localhost','127.0.0.1','[::1]'].includes(url.hostname)
       || !['/life_acceptance','/life_runtime_fixture'].includes(url.pathname)
-      || !['postgres:','postgresql:'].includes(url.protocol)) {
+      || !['postgres:','postgresql:'].includes(url.protocol)
+      || url.search || url.hash) {
     throw new Error('PostgreSQL qualification requires a loopback synthetic fixture database');
   }
-  const { Client } = await import('pg');
+  // pg-connection-string accepts query parameters that override host/database
+  // and connection options. The URL guard therefore forbids every query/hash.
+  return url;
+}
+
+export async function openPostgres({env=process.env,loadClient=()=>import('pg')}={}) {
+  const target = env.LIFE_RUNTIME_DATABASE_URL;
+  if (!target) return null;
+  validatePostgresTarget(target,env.LIFE_RUNTIME_POSTGRES_ACK);
+  const { Client } = await loadClient();
   async function connect() {
     const client = new Client({ connectionString:target,connectionTimeoutMillis:5000,
       statement_timeout:15000,lock_timeout:10000,application_name:'life-runtime-synthetic' });
