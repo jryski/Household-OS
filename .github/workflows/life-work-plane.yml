@@ -1,0 +1,66 @@
+name: Life work plane
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/*life_assistance*'
+      - 'supabase/migrations/*life_runtime*'
+      - 'scripts/test_life_work_plane.mjs'
+      - 'scripts/test_life_runtime_adapter.mjs'
+      - 'scripts/life_runtime_postgres.mjs'
+      - 'scripts/test_life_runtime_postgres_config.mjs'
+      - 'package*.json'
+      - '.github/workflows/life-work-plane.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/*life_assistance*'
+      - 'supabase/migrations/*life_runtime*'
+      - 'scripts/test_life_work_plane.mjs'
+      - 'scripts/test_life_runtime_adapter.mjs'
+      - 'scripts/life_runtime_postgres.mjs'
+      - 'scripts/test_life_runtime_postgres_config.mjs'
+      - 'package*.json'
+      - '.github/workflows/life-work-plane.yml'
+permissions:
+  contents: read
+jobs:
+  postgres-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: npm ci --ignore-scripts
+      - run: npm run test:life-db
+      - run: npm run test:life-runtime
+      - run: npm run test:life-runtime-config
+      - run: PYTHONPATH=src python3 -m unittest discover -s tests -v
+  postgres-runtime:
+    name: PostgreSQL 17 runtime and contention
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17@sha256:2d2b8998d31037bf721cfdf764d76ba74171b4fab3431b7f72c27c56ddbdf9e3
+        env:
+          POSTGRES_DB: life_acceptance
+          POSTGRES_PASSWORD: fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d life_acceptance"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - run: npm ci --ignore-scripts
+      - run: npm run test:life-runtime-config
+      - name: Exact migrations and independent session races
+        env:
+          LIFE_RUNTIME_DATABASE_URL: postgresql://postgres@127.0.0.1:5432/life_acceptance
+          LIFE_RUNTIME_POSTGRES_ACK: synthetic-disposable
+          PGPASSWORD: fixture-only
+        run: npm run test:life-runtime
