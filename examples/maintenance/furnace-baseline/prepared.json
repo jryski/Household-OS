@@ -1,0 +1,134 @@
+{
+  "contract": "household-maintenance-package/1",
+  "identity_note": "All preview IDs and the clock are invented. Proposal RPC returns a new canonical item ID; these preview IDs are not insertion arguments. Actor text is attribution, not identity or authority.",
+  "item_links": [
+    {
+      "board_id": "00000000-0000-4000-8000-000000000200",
+      "evidence_ref": "demo:maintenance:furnace-baseline:v1",
+      "item_id": "00000000-0000-4000-8000-000000000201",
+      "observed_at": "2030-01-15T12:00:00Z",
+      "relation": "evidence",
+      "source_key": "furnace-baseline-demo-1",
+      "source_kind": "maintenance-workflow",
+      "source_store": "synthetic-fixtures"
+    }
+  ],
+  "preparation_only": true,
+  "preview": {
+    "activity": [],
+    "dependencies": [],
+    "evidence": [
+      {
+        "created_at": "2030-01-15T12:00:00Z",
+        "evidence_ref": "demo:maintenance:furnace-baseline:v1",
+        "id": "00000000-0000-4000-8000-000000000202",
+        "observed_at": "2030-01-15T12:00:00Z",
+        "references_omitted": false,
+        "relation": "evidence",
+        "source_key": "furnace-baseline-demo-1",
+        "source_kind": "maintenance-workflow",
+        "source_store": "synthetic-fixtures"
+      }
+    ],
+    "item": {
+      "description": "Synthetic research task: establish what equipment-identification and service-history evidence is missing before proposing maintenance timing. The furnace model and last-service date are unknown. Do not infer that service is overdue or that any service has occurred. Return a proposed finding for human review; do not contact a provider, book service, purchase anything, or change equipment.",
+      "description_truncated": false,
+      "due_at": null,
+      "id": "00000000-0000-4000-8000-000000000201",
+      "lease_until": null,
+      "not_before": null,
+      "source_ref": "demo:maintenance:furnace-baseline:v1",
+      "source_ref_omitted": false,
+      "state": "proposed",
+      "title": "Establish furnace maintenance baseline",
+      "version": 1
+    }
+  },
+  "proposal": {
+    "arguments": {
+      "p_actor_ref": "agent-demo-maintenance",
+      "p_board_key": "home-maintenance-demo",
+      "p_confidence": null,
+      "p_description": "Synthetic research task: establish what equipment-identification and service-history evidence is missing before proposing maintenance timing. The furnace model and last-service date are unknown. Do not infer that service is overdue or that any service has occurred. Return a proposed finding for human review; do not contact a provider, book service, purchase anything, or change equipment.",
+      "p_domains": [
+        "maintenance"
+      ],
+      "p_due_at": null,
+      "p_item_key": "demo:furnace:baseline:v1",
+      "p_not_before": null,
+      "p_source_ref": "demo:maintenance:furnace-baseline:v1",
+      "p_title": "Establish furnace maintenance baseline"
+    },
+    "dispatched": false,
+    "operation": "life_propose_work_v1"
+  },
+  "proposed_finding": {
+    "accepted": false,
+    "blocked": true,
+    "contract": "household-maintenance-finding/1",
+    "coverage": "Synthetic request only; source documents, other stores and external sources have not been checked.",
+    "evidence_refs": [
+      "demo:maintenance:furnace-baseline:v1"
+    ],
+    "external_action_authorized": false,
+    "observations": {
+      "last_service_at": null,
+      "model": null,
+      "service_status": "unknown"
+    },
+    "proposed_next_step": "Request the missing evidence, then research applicable manufacturer guidance before proposing maintenance timing.",
+    "reference": "demo:maintenance:furnace-baseline:finding:v1",
+    "requested_evidence": "Provide a readable manufacturer/model-label photo and the most recent service receipt, if available.",
+    "scenario_id": "furnace-baseline-demo-1",
+    "status": "proposed",
+    "summary": "Maintenance timing cannot be established: equipment model and last-service date are unknown.",
+    "synthetic": true,
+    "workflow_id": "furnace-maintenance-baseline-demo/v1"
+  },
+  "scenario_id": "furnace-baseline-demo-1",
+  "synthetic": true,
+  "worker_context": {
+    "acceptance_criteria": [
+      "Keep model and last-service date unknown until supported by evidence.",
+      "Explain why maintenance timing cannot be established from this demo request.",
+      "Return one specific evidence request and a blocked proposed finding for human review."
+    ],
+    "authority": "research_only",
+    "contentTrust": "untrusted",
+    "contract": "household-maintenance-research-context/1",
+    "coverage": {
+      "external_sources_checked": false,
+      "omitted_sections": [],
+      "other_stores_checked": false
+    },
+    "evidence": [
+      {
+        "reference": "demo:maintenance:furnace-baseline:v1",
+        "summary": "Invented demo request only. No equipment label, service receipt, manufacturer guidance, or real household record has been supplied."
+      }
+    ],
+    "item": {
+      "description": "Synthetic research task: establish what equipment-identification and service-history evidence is missing before proposing maintenance timing. The furnace model and last-service date are unknown. Do not infer that service is overdue or that any service has occurred. Return a proposed finding for human review; do not contact a provider, book service, purchase anything, or change equipment.",
+      "description_truncated": false,
+      "due_at": null,
+      "id": "00000000-0000-4000-8000-000000000201",
+      "lease_until": null,
+      "not_before": null,
+      "source_ref": "demo:maintenance:furnace-baseline:v1",
+      "source_ref_omitted": false,
+      "state": "proposed",
+      "title": "Establish furnace maintenance baseline",
+      "version": 1
+    },
+    "observations": {
+      "last_service_at": null,
+      "model": null,
+      "service_status": "unknown"
+    },
+    "requested_evidence": "Provide a readable manufacturer/model-label photo and the most recent service receipt, if available.",
+    "scenario_id": "furnace-baseline-demo-1",
+    "synthetic": true,
+    "workflow_id": "furnace-maintenance-baseline-demo/v1"
+  },
+  "workflow_id": "furnace-maintenance-baseline-demo/v1"
+}

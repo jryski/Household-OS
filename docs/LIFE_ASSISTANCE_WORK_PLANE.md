@@ -55,6 +55,12 @@ Calendar/list delivery, contractor research connectors, authenticated approval U
 and individual agent integration remain adapter work. Existing calendar and memory
 surfaces are unchanged. Identical schema in two stores does not federate them.
 
+The [synthetic furnace baseline workflow](../examples/maintenance/furnace-baseline/README.md)
+prepares exact existing proposal arguments, source-link previews, bounded research
+context and a blocked finding. Its CLI performs no database or provider calls.
+It supplies a callback seam for an existing authenticated worker while leaving
+equipment identity and service timing unknown until evidence is provided.
+
 ## Deployment
 
 Apply the migration separately to each authorized trust domain. Create a board
