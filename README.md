@@ -78,6 +78,9 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md) — household-scoped agent roles, propose-versus-execute boundaries, and conceptual proposals, approvals, and receipts.
 - [`docs/LIFE_ASSISTANCE_WORK_PLANE.md`](docs/LIFE_ASSISTANCE_WORK_PLANE.md) — server-only database implementation of evidence-linked work, routines, signals, and bounded agent check-ins; individual agent/broker integration remains separate.
+- [`examples/maintenance/furnace-baseline`](examples/maintenance/furnace-baseline/README.md) — executable synthetic maintenance proposal, bounded context and blocked finding using the existing work-plane and worker contracts.
+- [`review/README.md`](review/README.md) — disconnected human review desk, with invented maintenance data and a separate human permission boundary.
+- [`docs/LIFE_HUMAN_REVIEW.md`](docs/LIFE_HUMAN_REVIEW.md) — source-only human review and decision adapter; no live grants or installation.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — functional milestones and acceptance gates.
 - [`docs/DOGFOOD_CALENDAR_SYNC.md`](docs/DOGFOOD_CALENDAR_SYNC.md) — executable calendar reconciler setup, safety boundaries, and dogfood acceptance checks.
 - [`docs/SKYLIGHT_DISPLAY_BRIDGE.md`](docs/SKYLIGHT_DISPLAY_BRIDGE.md) — official connection handoff and experimental, calendar-only display visibility reconciliation.

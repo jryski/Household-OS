@@ -1,0 +1,7 @@
+{
+  "mode": "operate",
+  "scope": "household review reference",
+  "tokens": {"canvas":"#f5f3ed","paper":"#fffefa","ink":"#243b32","muted":"#54665b","rule":"#d8ded4","accent":"#285b45","accentWash":"#e5eee3","caution":"#785014","cautionWash":"#fcf1dc","error":"#923c2f","errorWash":"#fff0eb"},
+  "layout": {"wide":"task list and reading column","narrow":"queue then task with back control","measure":"68ch","targetMinHeight":"44px"},
+  "constraints": ["explicit example mode","no remote assets","no automatic source fetches","no preselected decision","uncertain writes never replayed automatically"]
+}

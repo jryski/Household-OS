@@ -100,3 +100,22 @@ HOS-2 turns the HOS-1 contracts into reusable adapter tests. It should include c
 HOS-3 applies household authority to event-linked work. It should prove that agents and household members can capture and prepare work without silently gaining permission to contact providers, spend money, expose private annotations, approve protected actions, or mark outcomes accepted.
 
 [`AGENT_INTERACTION_CONTRACTS.md`](AGENT_INTERACTION_CONTRACTS.md) is the design note for that household-scoped behavior, including synthetic acceptance checks. Passing HOS-3 still requires executable evidence on a principal-bound data plane. The note does not mark this milestone complete.
+
+### Source checkpoint: maintenance and human review
+
+The [furnace baseline](../examples/maintenance/furnace-baseline/README.md) prepares
+one bounded maintenance proposal. It asks for the equipment label and service
+receipt, preserves unknown service timing, and returns a finding for review.
+The [review desk](../review/README.md) displays that invented example and lets a
+person allow research, record evidenced completion, or dismiss a suggestion.
+The [human adapter](LIFE_HUMAN_REVIEW.md) keeps those decisions separate from
+worker credentials, checks the version the person reviewed, and records the
+decision together with the state change. Missing or ambiguous write replies
+block another attempt until reconciled.
+
+This is source preparation, not HOS-3 acceptance. The new migration is unapplied,
+no human grant is enabled, and the preview has no account connection. A later
+pilot must qualify native database contention, the dedicated human OAuth client,
+browser login, keyboard/mobile behavior, the real worker session and one complete
+human-reviewed work cycle. Scheduling and external household actions remain
+outside this slice.
