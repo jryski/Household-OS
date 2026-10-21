@@ -1,0 +1,26 @@
+{
+  "contract": "household-maintenance-evidence-intake/1",
+  "synthetic": true,
+  "workflow_id": "furnace-maintenance-baseline-demo/v1",
+  "scenario_id": "furnace-baseline-demo-1",
+  "received_at": "2030-01-16T12:00:00Z",
+  "artifacts": [
+    {
+      "kind": "equipment_label_photo",
+      "media_type": "image/png",
+      "declared_sha256": "3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+      "claims": [
+        {"field": "model", "value": "DEMO-FURNACE-100", "origin": "person_transcription"}
+      ]
+    },
+    {
+      "kind": "service_receipt",
+      "media_type": "application/pdf",
+      "declared_sha256": "c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+      "claims": [
+        {"field": "last_service_at", "value": "2029-10-02", "origin": "person_transcription"},
+        {"field": "model", "value": "DEMO-FURNACE-100", "origin": "automated_extraction"}
+      ]
+    }
+  ]
+}

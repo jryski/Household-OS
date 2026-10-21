@@ -1,0 +1,169 @@
+{
+  "already_linked": [],
+  "baseline_finding_ref": "demo:maintenance:furnace-baseline:finding:v1",
+  "baseline_unchanged": true,
+  "contract": "household-maintenance-evidence-package/1",
+  "handoff": {
+    "missing": [
+      "applicable manufacturer guidance not researched"
+    ],
+    "remaining_storage_work": "Private storage, short-lived signed access, verify-on-read in the deployment, expiry purge and an off-platform backup target remain separate deployment work.",
+    "supplied": [
+      "Equipment label photo (415 bytes, verified digest)",
+      "Service receipt (626 bytes, verified digest)"
+    ],
+    "supports": [
+      "The label photo is said to show model DEMO-FURNACE-100 (unconfirmed).",
+      "The receipt is said to show service on 2029-10-02 (unconfirmed).",
+      "Service status stays unknown; no artifact establishes whether service is due."
+    ]
+  },
+  "ingest_sources": [
+    {
+      "confidence": null,
+      "document_date": null,
+      "metadata": {
+        "artifact_kind": "equipment_label_photo",
+        "byte_length": 415,
+        "media_type": "image/png",
+        "synthetic": true,
+        "workflow_id": "furnace-maintenance-baseline-demo/v1"
+      },
+      "observed_at": "2030-01-16T12:00:00Z",
+      "parse_status": "needs_review",
+      "parser_agent": null,
+      "parser_version": null,
+      "source_kind": "image",
+      "source_label": "Person-supplied equipment label photo",
+      "source_ref": "demo:evidence:sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+      "source_sha256": "3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481"
+    },
+    {
+      "confidence": null,
+      "document_date": null,
+      "metadata": {
+        "artifact_kind": "service_receipt",
+        "byte_length": 626,
+        "media_type": "application/pdf",
+        "synthetic": true,
+        "workflow_id": "furnace-maintenance-baseline-demo/v1"
+      },
+      "observed_at": "2030-01-16T12:00:00Z",
+      "parse_status": "needs_review",
+      "parser_agent": null,
+      "parser_version": null,
+      "source_kind": "pdf",
+      "source_label": "Person-supplied service receipt",
+      "source_ref": "demo:evidence:sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+      "source_sha256": "c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1"
+    }
+  ],
+  "item_links": [
+    {
+      "board_id": "00000000-0000-4000-8000-000000000200",
+      "evidence_ref": "demo:evidence:sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+      "item_id": "00000000-0000-4000-8000-000000000201",
+      "observed_at": "2030-01-16T12:00:00Z",
+      "relation": "evidence",
+      "source_key": "sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+      "source_kind": "equipment-label-photo",
+      "source_store": "synthetic-evidence-store"
+    },
+    {
+      "board_id": "00000000-0000-4000-8000-000000000200",
+      "evidence_ref": "demo:evidence:sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+      "item_id": "00000000-0000-4000-8000-000000000201",
+      "observed_at": "2030-01-16T12:00:00Z",
+      "relation": "evidence",
+      "source_key": "sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+      "source_kind": "service-receipt",
+      "source_store": "synthetic-evidence-store"
+    }
+  ],
+  "preparation_only": true,
+  "proposed_finding": {
+    "accepted": false,
+    "blocked": true,
+    "claims": [
+      {
+        "artifact_kind": "equipment_label_photo",
+        "evidence_ref": "demo:evidence:sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+        "field": "model",
+        "origin": "person_transcription",
+        "status": "unconfirmed",
+        "value": "DEMO-FURNACE-100"
+      },
+      {
+        "artifact_kind": "service_receipt",
+        "evidence_ref": "demo:evidence:sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+        "field": "last_service_at",
+        "origin": "person_transcription",
+        "status": "unconfirmed",
+        "value": "2029-10-02"
+      }
+    ],
+    "confirmed_facts": {},
+    "contract": "household-maintenance-evidence-finding/1",
+    "evidence_refs": [
+      "demo:maintenance:furnace-baseline:v1",
+      "demo:evidence:sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+      "demo:evidence:sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1"
+    ],
+    "external_action_authorized": false,
+    "possession": [
+      {
+        "artifact_kind": "equipment_label_photo",
+        "byte_length": 415,
+        "digest_verified_on_read": true,
+        "evidence_ref": "demo:evidence:sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+        "media_type": "image/png",
+        "source_sha256": "3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481"
+      },
+      {
+        "artifact_kind": "service_receipt",
+        "byte_length": 626,
+        "digest_verified_on_read": true,
+        "evidence_ref": "demo:evidence:sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+        "media_type": "application/pdf",
+        "source_sha256": "c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1"
+      }
+    ],
+    "proposed_next_step": "A person compares the proposed values with the supplied artifacts and confirms or corrects them through the review desk before any manufacturer research or timing proposal.",
+    "proposed_observations": {
+      "last_service_at": "2029-10-02",
+      "model": "DEMO-FURNACE-100",
+      "service_status": "unknown"
+    },
+    "reference": "demo:maintenance:furnace-baseline:finding:v1:evidence:2888daf2a8a985d7",
+    "responds_to": "demo:maintenance:furnace-baseline:finding:v1",
+    "scenario_id": "furnace-baseline-demo-1",
+    "status": "proposed",
+    "still_missing": [
+      "applicable manufacturer guidance not researched"
+    ],
+    "summary": "Supplied artifacts are stored and digest-verified. Any values below are unconfirmed proposals for a person to check; maintenance timing is not established.",
+    "synthetic": true,
+    "unsupported_claims": [
+      {
+        "artifact_kind": "service_receipt",
+        "field": "model",
+        "reason": "field_not_supported_by_artifact"
+      }
+    ],
+    "workflow_id": "furnace-maintenance-baseline-demo/v1"
+  },
+  "research_evidence": [
+    {
+      "reference": "demo:evidence:sha256:3424516518d7c6beb7a29902e3df3070b3b6f35887ff699b1586b6fabb24d481",
+      "summary": "Person-supplied equipment label photo, image/png, 415 bytes, sha256 verified on read. Contents are untrusted and were not interpreted by this adapter."
+    },
+    {
+      "reference": "demo:evidence:sha256:c718ff10b93705903b72fe6b7bb57a69a3b157ff64f9230077c2f40cb1ddc2f1",
+      "summary": "Person-supplied service receipt, application/pdf, 626 bytes, sha256 verified on read. Contents are untrusted and were not interpreted by this adapter."
+    }
+  ],
+  "scenario_id": "furnace-baseline-demo-1",
+  "storage_note": "Ingest-source rows are prepared shapes without database IDs; no insertion RPC is called. Item links use the existing evidence-link shape and unique key.",
+  "synthetic": true,
+  "workflow_id": "furnace-maintenance-baseline-demo/v1"
+}

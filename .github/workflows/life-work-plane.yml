@@ -13,6 +13,9 @@ on:
       - 'scripts/test_life_runtime_adapter.mjs'
       - 'scripts/life_runtime_postgres.mjs'
       - 'scripts/test_life_runtime_postgres_config.mjs'
+      - 'src/household_os/maintenance_*.py'
+      - 'tests/test_maintenance_*.py'
+      - 'examples/maintenance/**'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
   push:
@@ -29,6 +32,9 @@ on:
       - 'scripts/test_life_runtime_adapter.mjs'
       - 'scripts/life_runtime_postgres.mjs'
       - 'scripts/test_life_runtime_postgres_config.mjs'
+      - 'src/household_os/maintenance_*.py'
+      - 'tests/test_maintenance_*.py'
+      - 'examples/maintenance/**'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
 permissions:

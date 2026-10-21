@@ -60,6 +60,9 @@ prepares exact existing proposal arguments, source-link previews, bounded resear
 context and a blocked finding. Its CLI performs no database or provider calls.
 It supplies a callback seam for an existing authenticated worker while leaving
 equipment identity and service timing unknown until evidence is provided.
+The [synthetic evidence intake](../examples/maintenance/furnace-evidence/README.md)
+turns a supplied label photo or receipt into digest-verified references and an
+unconfirmed proposed finding through a host-supplied storage boundary.
 
 ## Deployment
 
