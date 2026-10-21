@@ -8,6 +8,7 @@ on:
       - 'scripts/test_life_human_review.mjs'
       - 'review/**'
       - 'scripts/test_review_client.mjs'
+      - 'scripts/test_review_host.mjs'
       - 'scripts/serve_review.py'
       - 'scripts/test_life_work_plane.mjs'
       - 'scripts/test_life_runtime_adapter.mjs'
@@ -24,6 +25,7 @@ on:
       - 'scripts/test_life_human_review.mjs'
       - 'review/**'
       - 'scripts/test_review_client.mjs'
+      - 'scripts/test_review_host.mjs'
       - 'scripts/serve_review.py'
       - 'scripts/test_life_work_plane.mjs'
       - 'scripts/test_life_runtime_adapter.mjs'
@@ -47,6 +49,7 @@ jobs:
       - run: npm run test:life-runtime-config
       - run: npm run test:life-human-review
       - run: npm run test:life-review-client
+      - run: npm run test:life-review-host
       - run: PYTHONPATH=src python3 -m unittest discover -s tests -v
   postgres-runtime:
     name: PostgreSQL 17 runtime and contention

@@ -7,7 +7,8 @@
     "test:life-runtime": "node scripts/test_life_runtime_adapter.mjs",
     "test:life-runtime-config": "node --test scripts/test_life_runtime_postgres_config.mjs",
     "test:life-human-review": "node scripts/test_life_human_review.mjs",
-    "test:life-review-client": "node --test scripts/test_review_client.mjs"
+    "test:life-review-client": "node --test scripts/test_review_client.mjs",
+    "test:life-review-host": "node --test scripts/test_review_host.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",

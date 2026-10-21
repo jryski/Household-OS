@@ -14,8 +14,10 @@ worker grants and tools cannot make human decisions.
 ## Authority and custody
 
 A trusted review host must supply a verified human session and a fixed human
-grant binding. This phase adds no authentication flow. A demo session is never
-usable as a live credential. Do not send review tokens to a model, worker,
+grant binding. The optional sign-in host in `review/host.mjs` supplies that
+session from a supported OAuth flow and stays off by default; see
+[the review README](../review/README.md#dedicated-human-sign-in-host). A demo
+session is never usable as a live credential. Do not send review tokens to a model, worker,
 broker delegation or model-callable tool.
 
 Each RPC checks a signed-request subject, upstream OAuth client and current
