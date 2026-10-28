@@ -249,7 +249,8 @@ class GoogleCalendarProvider:
         )
         try:
             with urlopen(request, timeout=30) as response:
-                return json.loads(response.read().decode("utf-8"))
+                data = response.read()
+                return json.loads(data.decode("utf-8")) if data else {}
         except HTTPError as exc:
             message = "request failed"
             try:

@@ -74,6 +74,8 @@ Agent conversations are not the primary coordination primitive. Shared work obje
 
 ## Architecture documents
 
+- [`docs/TRAVEL_ASSISTANCE.md`](docs/TRAVEL_ASSISTANCE.md) — executable travel intake, canonical event publication, departure checks, notification retries, and source-labeled transport comparisons; live activation remains separate.
+
 - [`docs/IMAGE_CALENDAR_INTAKE.md`](docs/IMAGE_CALENDAR_INTAKE.md) — low-context artifact intake, setup options, category routing, provider delivery, and reconciliation.
 - [`docs/PLANNING_WORK_PLANE.md`](docs/PLANNING_WORK_PLANE.md) — virtual Kanban, work-item lifecycle, and event-linked preparation work.
 - [`docs/AGENT_INTERACTION_CONTRACTS.md`](docs/AGENT_INTERACTION_CONTRACTS.md) — household-scoped agent roles, propose-versus-execute boundaries, and conceptual proposals, approvals, and receipts.
