@@ -7,6 +7,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from time import monotonic
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable
 from zoneinfo import ZoneInfo
@@ -174,13 +175,15 @@ def departure_plan(b: dict, now: datetime, route: Callable | None = None,
     # Query predicted traffic at the intended departure, not at flight takeoff.
     # Retain the longest of bounded refinement samples to avoid oscillation.
     live_durations = []
+    route_started = monotonic()
     if route:
         try:
             for _ in range(3):
                 leave = deadline - timedelta(minutes=duration + extra)
                 sample = route(t["origin"], t["destination"], max(now, leave), t["mode"])
-                age = (now - instant(sample["observed_at"])).total_seconds()
-                if not 0 <= age <= 900:
+                observed_clock = now + timedelta(seconds=monotonic() - route_started)
+                age = (observed_clock - instant(sample["observed_at"])).total_seconds()
+                if not -5 <= age <= 900:
                     raise ValueError("route sample is stale or future dated")
                 if sample["origin"] != t["origin"] or sample["destination"] != t["destination"] or sample["mode"] != t["mode"]:
                     raise ValueError("route does not match transfer")

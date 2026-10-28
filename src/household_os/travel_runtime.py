@@ -12,6 +12,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from dataclasses import replace
+from time import monotonic
 
 from .travel import calendar_item, departure_plan, digest, instant, validate_booking
 
@@ -130,6 +131,7 @@ class TravelWorker:
         if now.tzinfo is None or not 1 <= limit <= 1000:
             raise ValueError("aware clock and limit 1..1000 required")
         now = instant(now.isoformat())
+        tick_started = monotonic()
         summary = {"checked": 0, "calendar_written": 0, "notified": 0, "failed": 0, "unavailable": []}
         if not self.route:
             summary["unavailable"].append("traffic")
@@ -182,7 +184,8 @@ class TravelWorker:
                 old = json.loads(row["plan"]) if row["plan"] else None
                 if b["status"] == "confirmed" and b.get("transfer"):
                     try:
-                        plan = departure_plan(b, now, self.route, old)
+                        plan_clock = now + timedelta(seconds=monotonic() - tick_started)
+                        plan = departure_plan(b, plan_clock, self.route, old)
                         if any(r not in self.recipients for r in b["transfer"]["recipients"]):
                             raise ValueError("unenrolled recipient")
                         leave = instant(plan["leave_by"])

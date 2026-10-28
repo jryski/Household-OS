@@ -65,6 +65,18 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(len(calls), 3)
         self.assertLess(calls[-1], instant(booking()['start']))
 
+    def test_route_observed_after_http_request_is_accepted(self):
+        def route(origin,dest,departure,mode):
+            return dict(minutes=80,observed_at=(NOW+timedelta(seconds=2)).isoformat(),
+                        origin=origin,destination=dest,mode=mode,source='fixture')
+        self.assertEqual(departure_plan(booking(),NOW,route)['quality'],'traffic_forecast')
+
+    def test_route_from_future_is_rejected(self):
+        def route(origin,dest,departure,mode):
+            return dict(minutes=80,observed_at=(NOW+timedelta(hours=1)).isoformat(),
+                        origin=origin,destination=dest,mode=mode,source='fixture')
+        self.assertEqual(departure_plan(booking(),NOW,route)['quality'],'estimate')
+
     def test_stale_route_uses_conservative_previous(self):
         def stale(*args):
             return dict(minutes=5, observed_at=(NOW-timedelta(hours=1)).isoformat())

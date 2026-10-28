@@ -22,7 +22,7 @@ SQLite is **operational staging and the single-host reference runner**, not a re
 
 The required arrival deadline is an explicit `arrive_by`, or the scheduled service departure minus a configured `arrival_buffer_minutes`. An earlier sourced cutoff wins. The code does not relax the deadline when an operational delay appears. Airline/rail status and cutoff feeds must supply evidence; the worker does not invent them.
 
-The Google Routes adapter queries predicted traffic at the proposed ground departure, with at most three refinement requests. It retains the longest refinement sample. Samples older than fifteen minutes, future-dated samples, unsupported modes, transport failures and route mismatches fall back to the more conservative configured/last-known duration and label the plan as an estimate. These are forecasts, not guarantees.
+The Google Routes adapter queries predicted traffic at the proposed ground departure, with at most three refinement requests. It retains the longest refinement sample. Samples older than fifteen minutes, future-dated samples beyond five seconds of clock tolerance, unsupported modes, transport failures and route mismatches fall back to the more conservative configured/last-known duration and label the plan as an estimate. These are forecasts, not guarantees.
 
 The first tick sends only the most relevant stage: briefing within 24 hours of leaving, preparation within one hour, or leave-now once due. A cumulative advance of at least ten minutes generates a changed-plan alert. Old booking revisions, cancelled bookings, obsolete queued advice and elapsed arrival deadlines cannot send pending departure alerts. A worker restart preserves pending deliveries and bounded retry backoff.
 
