@@ -67,7 +67,21 @@ class TravelRepository:
                 return "stale"
             if old and b["revision"] == old["revision"]:
                 if old["hash"] != content_hash:
-                    raise ValueError("same revision has conflicting content; review required")
+                    previous = json.loads(old["payload"])
+                    evidence_ref = b["evidence_ref"]
+                    if {**previous, "evidence_ref": evidence_ref} != b:
+                        raise ValueError("same revision has conflicting content; review required")
+                    # Preserve the original payload and canonical hash. A forwarded
+                    # copy adds evidence for the same revision without republishing it.
+                    self.db.execute(
+                        """INSERT INTO travel_observations
+                           (booking_id,revision,hash,source_ref,observed_at)
+                           SELECT ?,?,?,?,? WHERE NOT EXISTS (
+                             SELECT 1 FROM travel_observations
+                             WHERE booking_id=? AND revision=? AND source_ref=?)""",
+                        (key, b["revision"], content_hash, evidence_ref, now.isoformat(),
+                         key, b["revision"], evidence_ref),
+                    )
                 return "duplicate"
             self.db.execute("""INSERT INTO travel_bookings(id,revision,hash,payload)
                 VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,
@@ -202,8 +216,10 @@ class TravelWorker:
                             stage = "leave_now" if remaining <= 0 else "prepare" if remaining <= 3600 else "brief" if remaining <= 86400 else None
                             if stage:
                                 self.repo.db.execute("""UPDATE travel_notifications SET state='superseded'
-                                  WHERE booking_id=? AND revision=? AND state='pending' AND kind IN ('brief','prepare','changed') AND kind<>?""",
-                                                     (key, b["revision"], stage))
+                                  WHERE booking_id=? AND revision=? AND state='pending'
+                                    AND ((kind IN ('brief','prepare') AND kind<>?)
+                                      OR (kind='changed' AND ?='leave_now'))""",
+                                                     (key, b["revision"], stage, stage))
                                 self._enqueue(key, b, stage, plan)
                             # Notify when cumulative advance since last change >=10m.
                             baseline = (old or {}).get("notified_leave_by", (old or {}).get("leave_by"))

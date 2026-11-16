@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.error import HTTPError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen, HTTPRedirectHandler, build_opener
@@ -34,11 +34,20 @@ class GoogleTrafficRoutes:
     def __call__(self, origin, destination, depart_at, mode):
         if mode not in ("drive", "taxi", "uber", "lyft"):
             raise ValueError("Google driving adapter cannot estimate this travel mode")
-        result = self.transport("https://routes.googleapis.com/directions/v2:computeRoutes", {
+        request = {
             "origin": {"address": origin}, "destination": {"address": destination},
             "travelMode": "DRIVE", "routingPreference": "TRAFFIC_AWARE_OPTIMAL",
-            "departureTime": depart_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
-        }, {"X-Goog-Api-Key": self.api_key, "X-Goog-FieldMask": "routes.duration"})
+        }
+        # The driving API rejects past timestamps. When near departure, let it
+        # use its request time so request latency cannot make our timestamp stale.
+        if depart_at > datetime.now(UTC) + timedelta(seconds=5):
+            request["departureTime"] = depart_at.astimezone(UTC).isoformat().replace("+00:00", "Z")
+        result = self.transport(
+            "https://routes.googleapis.com/directions/v2:computeRoutes", request,
+            {"X-Goog-Api-Key": self.api_key, "X-Goog-FieldMask": "routes.duration,fallbackInfo"},
+        )
+        if "fallbackInfo" in result:
+            raise ValueError("routing provider could not honor the requested traffic preference")
         duration = result["routes"][0]["duration"]
         if not isinstance(duration, str) or not duration.endswith("s"):
             raise ValueError("invalid routing duration")

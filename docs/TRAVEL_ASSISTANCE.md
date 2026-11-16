@@ -7,7 +7,7 @@ This is code with synthetic qualification, not a production activation receipt. 
 ## Data path and authority
 
 1. A configured read-only Gmail query supplies calendar attachments, or an operator supplies `.ics` / normalized JSON. Unstructured HTML, PDF and image extraction is a separate existing intake boundary. Those messages are marked for review, never silently treated as parsed bookings.
-2. `travel_intake.py` accepts explicit flight/train/hotel events. Repeated UID/revision observations deduplicate. Equal-revision conflicts, unknown event types, recurrence, floating times, unknown zones and DST ambiguity require review. It ignores alarms and does not follow instructions from descriptions.
+2. `travel_intake.py` accepts explicit flight/train/hotel events. Repeated UID/revision observations deduplicate. An identical forwarded copy retains its source as additional evidence without publishing a new event. Equal-revision conflicts, unknown event types, recurrence, floating times, unknown zones and DST ambiguity require review. It ignores alarms and does not follow instructions from descriptions.
 3. The service stages observations and operational receipts privately. `HouseTravelPublisher` writes the existing `household_events` model, then reads it back. No new HOUSE schema, category, owner, calendar binding, or permission is created. It rejects stale observations, unexpected writers, manual canonical edits and concurrent update conflicts.
 4. A live worker requires the canonical HOUSE publisher before calendar writes or notifications. A canonical conflict stops those actions. UTC canonical projection avoids ambiguous time-without-timezone fields while retaining the original zones and evidence reference in metadata. Hotel stays remain date-based, with checkout exclusive at the provider.
 5. The worker reuses `DeliveryItem`, `GoogleTokenProvider` and the existing Google renderer/writer. Calendar IDs remain deterministic from canonical event ID and target. Cancellation deletes that managed event idempotently. The reference runner keeps operational delivery receipts in its private state.
@@ -22,9 +22,9 @@ SQLite is **operational staging and the single-host reference runner**, not a re
 
 The required arrival deadline is an explicit `arrive_by`, or the scheduled service departure minus a configured `arrival_buffer_minutes`. An earlier sourced cutoff wins. The code does not relax the deadline when an operational delay appears. Airline/rail status and cutoff feeds must supply evidence; the worker does not invent them.
 
-The Google Routes adapter queries predicted traffic at the proposed ground departure, with at most three refinement requests. It retains the longest refinement sample. Samples older than fifteen minutes, future-dated samples beyond five seconds of clock tolerance, unsupported modes, transport failures and route mismatches fall back to the more conservative configured/last-known duration and label the plan as an estimate. These are forecasts, not guarantees.
+The Google Routes adapter queries predicted traffic at the proposed ground departure, with at most three refinement requests. It retains the longest refinement sample. For an imminent departure the request uses Google’s current-time default. A response that indicates Google could not honor the requested traffic preference is treated as an unavailable forecast. Samples older than fifteen minutes, future-dated samples beyond five seconds of clock tolerance, unsupported modes, transport failures and route mismatches fall back to the more conservative configured/last-known duration and label the plan as an estimate. These are forecasts, not guarantees.
 
-The first tick sends only the most relevant stage: briefing within 24 hours of leaving, preparation within one hour, or leave-now once due. A cumulative advance of at least ten minutes generates a changed-plan alert. Old booking revisions, cancelled bookings, obsolete queued advice and elapsed arrival deadlines cannot send pending departure alerts. A worker restart preserves pending deliveries and bounded retry backoff.
+The first tick sends only the most relevant stage: briefing within 24 hours of leaving, preparation within one hour, or leave-now once due. A cumulative advance of at least ten minutes generates a changed-plan alert. Old booking revisions, cancelled bookings, obsolete queued advice and elapsed arrival deadlines cannot send pending departure alerts. A worker restart preserves pending deliveries and bounded retry backoff. A pending changed-plan alert remains eligible for retry while the plan stays current and the leave-now stage has yet to begin.
 
 Manual origin/mode/buffer configuration is required. Neither a city-level attachment location nor a missing home/hotel address is silently promoted into a navigable terminal destination. The origin timezone may be set independently for correct local notification text.
 
@@ -75,7 +75,7 @@ Only `tick --live` enables configured external actions. It requires explicit can
 | `HOUSE_TRAVEL_SOURCE_AGENT` | Fixed deployment-scoped source identity |
 | `HOUSE_TRAVEL_TARGET`, `HOUSE_TRAVEL_CALENDAR_REF` | Explicit managed calendar target and provider calendar |
 | Existing `HOUSE_GOOGLE_*` variables | Calendar OAuth access or refresh credentials |
-| `HOUSE_ROUTES_API_KEY` | Optional enabled Google Routes API key; absent means labeled fallback |
+| `HOUSE_ROUTES_API_KEY` | Server key for a Google Cloud project with billing and Routes API enabled. Without it the worker uses the labeled fallback. Set a quota appropriate to the worker’s polling frequency. |
 | `HOUSE_TRAVEL_RECIPIENTS` | Comma-separated enrolled recipient keys |
 | `HOUSE_TRAVEL_NOTIFY_URL`, `HOUSE_TRAVEL_NOTIFY_TOKEN` | Configured HTTPS receiver and server-only credential |
 
@@ -104,6 +104,14 @@ Transport observations accept `live_quote`, `published_fare`, `estimate`, or `un
 Attach supplied observations under a transfer's `transport_options`, with optional `party`. Configuring a selected mode and its transfer durations replans the departure. The comparison engine does not claim live Uber/Lyft/taxi inventory. A live quote adapter and provider-specific handoff links remain integration work; no provider prices are synthesized. Google Routes supplies driving duration, not rideshare pickup availability or fare data.
 
 ## Validation and activation boundary
+
+Run the end-to-end canary on a test host with Python 3.11+ and OpenSSL:
+
+```bash
+PYTHONPATH=src python3 tests/test_travel_canary.py
+```
+
+The canary generates an isolated SQLite database, HTTPS certificate and four loopback destinations for the HOUSE Data API, Google Calendar, Google Routes and the notification receiver. It executes the CLI against synthetic ICS data, imports a forwarded copy with a second evidence reference, simulates an acknowledgment failure after the calendar accepts a write, verifies a later booking revision updates the same calendar ID, and reads back cancellation. It also verifies that a traffic increase advances departure, a provider fallback stays labeled as an estimate, and the receiver deduplicates a retried changed-plan alert. It checks each notification receipt and sends zero provider calls outside loopback. The same canary runs in the Python test suite when OpenSSL is available.
 
 Run `PYTHONPATH=src python3 -m unittest discover -s tests -v`. Synthetic coverage includes timezone/overnight rendering, DST ambiguity, hotel checkout dates, duplicate/conflicting revisions, cancellation, conservative routing failure, source-labeled pricing, capacity limits, stale quotes, pending-alert invalidation, recipient revocation, delivery retry/restart, two local workers, canonical edit/concurrency conflicts, and read-only mailbox intake.
 
