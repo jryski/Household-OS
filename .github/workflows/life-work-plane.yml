@@ -8,6 +8,9 @@ on:
       - 'scripts/test_life_runtime_adapter.mjs'
       - 'scripts/life_runtime_postgres.mjs'
       - 'scripts/test_life_runtime_postgres_config.mjs'
+      - 'src/household_os/*.py'
+      - 'tests/test_*.py'
+      - 'pyproject.toml'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
   push:
@@ -19,6 +22,9 @@ on:
       - 'scripts/test_life_runtime_adapter.mjs'
       - 'scripts/life_runtime_postgres.mjs'
       - 'scripts/test_life_runtime_postgres_config.mjs'
+      - 'src/household_os/*.py'
+      - 'tests/test_*.py'
+      - 'pyproject.toml'
       - 'package*.json'
       - '.github/workflows/life-work-plane.yml'
 permissions:

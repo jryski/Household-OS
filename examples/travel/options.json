@@ -1,0 +1,23 @@
+{
+  "party": {"passengers": 2, "bags": 2},
+  "options": [
+    {
+      "provider": "taxi-demo", "price_kind": "published_fare", "price": 35,
+      "fees": 5, "return_price": 35, "currency": "USD",
+      "observed_at": "2030-06-10T10:00:00Z", "max_age_minutes": 60,
+      "source_ref": "fixture:taxi-tariff", "travel_minutes": 60,
+      "pickup_minutes": 10, "passenger_capacity": 4, "bag_capacity": 3
+    },
+    {
+      "provider": "drive-demo", "price_kind": "estimate", "price": 15,
+      "parking": 80, "currency": "USD", "source_ref": "fixture:parking",
+      "observed_at": "2030-06-10T10:00:00Z", "max_age_minutes": 60,
+      "travel_minutes": 60, "parking_minutes": 20,
+      "passenger_capacity": 4, "bag_capacity": 3
+    },
+    {
+      "provider": "rideshare-demo", "price_kind": "unavailable",
+      "observed_at": "2030-06-10T10:00:00Z"
+    }
+  ]
+}
