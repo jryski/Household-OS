@@ -15,7 +15,7 @@ from .travel_runtime import TravelRepository, TravelWorker
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Import structured travel observations or run a bounded worker tick.")
-    parser.add_argument("command", choices=("ingest", "tick", "status", "compare", "configure-transfer", "poll-inbox"))
+    parser.add_argument("command", choices=("ingest", "tick", "status", "compare", "configure-transfer", "poll-inbox", "preflight"))
     parser.add_argument("--db", default="travel.sqlite", help="Private operational state, outside repository")
     parser.add_argument("--input", help="Validated extraction JSON for ingest or quote observations for compare")
     parser.add_argument("--booking-id", help="Opaque booking key for configure-transfer")
@@ -24,7 +24,25 @@ def main(argv=None):
     parser.add_argument("--timezone", help="IANA zone for date-only hotel stays")
     parser.add_argument("--evidence", help="Private source reference for iCalendar import")
     parser.add_argument("--live", action="store_true", help="Enable configured network adapters for tick")
+    parser.add_argument("--scheduled", action="store_true", help="Require unattended refresh configuration for preflight or a live tick")
+    parser.add_argument("--inbox", action="store_true", help="Include optional mailbox in preflight")
     args = parser.parse_args(argv)
+    if args.command == "preflight":
+        if args.live:
+            parser.error("preflight cannot be used with --live")
+        from .travel_preflight import travel_preflight
+        result = travel_preflight(os.environ, args.db, scheduled=args.scheduled, inbox=args.inbox)
+        print(json.dumps(result))
+        return 0 if result["configuration_ready"] else 1
+    if args.inbox or (args.scheduled and (args.command != "tick" or not args.live)):
+        parser.error("--scheduled requires preflight or a live tick; --inbox is preflight only")
+    if args.scheduled:
+        from .travel_preflight import travel_preflight
+        result = travel_preflight(os.environ, args.db, scheduled=True)
+        if not result["configuration_ready"]:
+            print(json.dumps(result))
+            return 1
+
     now = datetime.now(UTC)
     if args.command in ("ingest", "compare", "configure-transfer") and not args.input:
         parser.error("--input is required")

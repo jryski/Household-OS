@@ -55,7 +55,11 @@ class TestDestinations:
 
             def handle_request(self):
                 size = int(self.headers.get('Content-Length', '0'))
-                body = json.loads(self.rfile.read(size)) if size else None
+                raw = self.rfile.read(size)
+                if self.path == '/oauth-fixture':
+                    body = parse_qs(raw.decode())
+                else:
+                    body = json.loads(raw) if size else None
                 status, result = fixture.dispatch(self.command, self.path, self.headers, body)
                 data = json.dumps(result).encode() if status != 204 else b''
                 self.send_response(status)
@@ -84,6 +88,14 @@ class TestDestinations:
 
     def dispatch(self, method, url, headers, body):
         url = urlsplit(url)
+        if url.path == '/oauth-fixture':
+            # Fixture parses the OAuth form before dispatch below.
+            assert method == 'POST'
+            assert body == {
+                'client_id': ['fixture-client'], 'client_secret': ['fixture-secret'],
+                'refresh_token': ['fixture-refresh'], 'grant_type': ['refresh_token'],
+            }
+            return 200, {'access_token': 'fixture-calendar'}
         if url.path == '/rest/v1/household_events':
             if headers.get('apikey') != 'fixture-house' or headers.get('Authorization') != 'Bearer fixture-house':
                 return 401, {}
@@ -182,7 +194,8 @@ def run(directory, fixture):
         HOUSE_SUPABASE_URL=fixture.url, HOUSE_SUPABASE_SERVICE_ROLE_KEY='fixture-house',
         HOUSE_TRAVEL_OWNER='fixture-owner', HOUSE_TRAVEL_VISIBILITY='private',
         HOUSE_TRAVEL_CATEGORY='fixture-travel', HOUSE_TRAVEL_SOURCE_AGENT='fixture-agent',
-        HOUSE_ROUTES_API_KEY='fixture-routes', HOUSE_GOOGLE_ACCESS_TOKEN='fixture-calendar',
+        HOUSE_ROUTES_API_KEY='fixture-routes', HOUSE_GOOGLE_CLIENT_ID='fixture-client',
+        HOUSE_GOOGLE_CLIENT_SECRET='fixture-secret', HOUSE_GOOGLE_REFRESH_TOKEN='fixture-refresh',
         HOUSE_TRAVEL_NOTIFY_URL=fixture.url + '/notify', HOUSE_TRAVEL_NOTIFY_TOKEN='fixture-notify',
         HOUSE_TRAVEL_TARGET='fixture-target', HOUSE_TRAVEL_CALENDAR_REF='fixture-calendar',
         HOUSE_TRAVEL_RECIPIENTS='fixture-recipient',
@@ -208,7 +221,7 @@ def run(directory, fixture):
 
     def tick(clock, *, result=0):
         fixture.now = instant(clock)
-        return cli('tick', '--live', result=result)
+        return cli('tick', '--live', '--scheduled', result=result)
 
     def read_plan():
         repo = TravelRepository(str(database))
@@ -221,7 +234,14 @@ def run(directory, fixture):
           patch.object(travel_cli, 'datetime', FixtureClock),
           patch.object(travel_adapters, 'datetime', FixtureClock),
           patch.object(travel_cli, 'GoogleTrafficRoutes', routes),
+          patch.object(google_calendar, 'GOOGLE_TOKEN_ENDPOINT', fixture.url + '/oauth-fixture'),
           patch.object(google_calendar, 'GOOGLE_CALENDAR_API', fixture.url + '/calendar/v3')):
+        assert cli('preflight', '--scheduled')['configuration_ready']
+        assert not database.exists()
+        with patch.dict(os.environ, {'HOUSE_GOOGLE_ACCESS_TOKEN': 'fixture-stale'}):
+            check = cli('tick', '--live', '--scheduled', result=1)
+            assert not check['capabilities']['calendar']
+            assert not database.exists() and not fixture.house
         assert ingest() == ['created']
         assert ingest() == ['duplicate']
         assert ingest('fixture:forwarded-copy') == ['duplicate']

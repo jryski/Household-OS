@@ -91,6 +91,38 @@ For unattended Gmail intake, provision a **separate read-only Gmail OAuth grant*
 
 A host supervisor should invoke read-only `poll-inbox --live` and then `tick --live` every minute. Checks are persisted with a five-minute interval. Run one host, a bounded batch, a service credential file readable only by its account, and monitored exit/status output. These commands are not scheduled by package installation. A missing calendar, traffic or notification adapter is listed in tick output; notification failures remain pending with backoff. Wiring a channel without checking its receipt behavior does not complete activation.
 
+### Fail-closed scheduled Calendar + departure pilot
+
+For the structured-file pilot, run the existing canary before installing a timer,
+and run this preflight with the intended service account and environment:
+
+    python -m household_os.travel_cli preflight --scheduled --db /path/to/private-state.sqlite
+
+Add `--inbox` only when checking a separately scoped operator-managed mailbox.
+Preflight checks configuration shape, emits booleans only, and does not open or
+create the database, refresh a token or contact a provider. Unattended Calendar
+configuration requires the refresh tuple and rejects a direct access token,
+which otherwise takes precedence. The same applies to Gmail when requested.
+A successful preflight is **not** proof of credentials, billing, database
+permissions, writer isolation, receiver enrollment or real delivery.
+
+Once the deployment owner verifies the exact canonical category/calendar
+binding, state ownership, Routes quota and deduplicating receiver, the existing
+single-host supervisor can use:
+
+    python -m household_os.travel_cli tick --live --scheduled --db /path/to/private-state.sqlite
+
+The scheduled tick repeats the offline gate before opening state and refuses
+partial setup. Its strict pilot requires traffic and notification configuration;
+operator-invoked ticks without `--scheduled` retain their existing behavior.
+For the first canary, keep Gmail polling off and ingest fabricated booking
+data directly. Record one canonical row and one provider event ID after repeat
+intake, one acknowledged notification, cancellation, and absence of queued
+obsolete delivery. Use a dedicated test target/recipient. Confirm the ordinary
+calendar reconciler does not own that category/target, and do not expose the
+trusted server key or this runner to an agent or browser. Disable the supervisor
+before rollback and retain the private worker state and receipts for reconciliation.
+
 ### Notification receiver contract
 
 POST JSON body: `{recipient_key, kind, plan}`. `plan` includes local human-readable `message`, origin/destination, booking title, UTC leave-by/arrival instants, duration components, source/quality/age, warnings and any supplied transport comparisons. Types are `brief`, `prepare`, `leave_now`, `changed`.
