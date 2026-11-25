@@ -53,7 +53,7 @@ Either artifact, or both, may be absent; the missing ones are listed.
 | `item_links` | The existing `life_ops.item_links` evidence row. `source_key` is `sha256:<digest>`, so repeating the same bytes maps to the same unique key. No link-insertion RPC is invented or called. |
 | `already_linked` | Repeat intake: links the host already holds. They are not prepared again. |
 | `research_evidence` | Fixed-template locator summaries. Source contents are untrusted and are not copied into worker text. |
-| `handoff` | Plain English: what was supplied, what it supports, what is missing and what storage work remains. |
+| `handoff` | Plain English, marked untrusted: what was supplied, what it supports (claim values quoted), what is missing and what storage work remains. |
 
 The public schema does not create the deployment's ingest-source table. Its
 logical shape comes from [image calendar intake](../../../docs/IMAGE_CALENDAR_INTAKE.md).
@@ -65,10 +65,19 @@ Column names beyond that documented shape are not guessed.
 `AuthorizedEvidenceStore`: `store_name`, the single authorized `board_id`, a
 content-addressed idempotent `put(sha256=, media_type=, data=)` returning an
 opaque reference, and `read(reference)`. Requests cannot name a path, URL or
-bucket. A reference that looks like a URL or filesystem path is refused, as are
-a store authorized for another board, a declared digest that does not match the
-bytes, stored bytes that fail verification on read, an unexpected media type or
-leading bytes, and files outside 1 byte to 8 MiB.
+bucket. A returned reference must match an allowlist: a lowercase namespace, a
+colon, then only letters, digits and `:._-`, at most 512 bytes, and not a
+reserved URL scheme such as `file:`, `s3:`, `gs:` or `data:`. Anything else,
+including URLs, bucket URIs, `~` and drive-letter or other filesystem paths, is
+refused. Also refused: a store authorized for another board, a declared digest
+that does not match the bytes, stored bytes that fail verification on read, an
+unexpected media type or leading bytes, and files outside 1 byte to 8 MiB.
+
+Every refusal the module decides itself, including duplicate bytes and a
+conflicting existing reference, happens before the first store write. A repeat
+of bytes already linked is verified by reading the existing reference and is not
+written again. Only a refusal of the store's own response can follow a write;
+the module never deletes.
 
 Private storage, short-lived signed access, deployment verify-on-read, expiry
 purge and an off-platform backup target remain open under issue #15. This
@@ -79,8 +88,15 @@ example activates none of them.
 After an authorized path inserts the prepared links, the existing runtime
 context carries them as ordinary evidence rows. `prepare_evidence_finding(packet,
 manifest, package, binding)` runs the baseline packet checks unchanged, requires
-every prepared link to be present and unomitted, and returns the proposed
-finding with provenance. It adds no worker tool and no source download.
+at least one prepared link and every prepared link to be present and
+unomitted, and refuses a package for another workflow or scenario. It rebuilds
+the finding from validated possession and claim fields, so status, acceptance,
+blocking, confirmed facts and authorization flags in the package are ignored:
+the result is always proposed, blocked and unaccepted. It adds no worker tool
+and no source download.
+
+The `handoff` is marked `contentTrust: untrusted`; claim values appear in it
+only as quoted, unconfirmed text and must be rendered as untrusted.
 
 Run the focused offline checks with:
 

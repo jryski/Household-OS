@@ -4,6 +4,7 @@
   "baseline_unchanged": true,
   "contract": "household-maintenance-evidence-package/1",
   "handoff": {
+    "contentTrust": "untrusted",
     "missing": [
       "applicable manufacturer guidance not researched"
     ],
@@ -13,8 +14,8 @@
       "Service receipt (626 bytes, verified digest)"
     ],
     "supports": [
-      "The label photo is said to show model DEMO-FURNACE-100 (unconfirmed).",
-      "The receipt is said to show service on 2029-10-02 (unconfirmed).",
+      "The label photo is said to show model \"DEMO-FURNACE-100\" (quoted untrusted claim, unconfirmed).",
+      "The receipt is said to show service on \"2029-10-02\" (quoted untrusted claim, unconfirmed).",
       "Service status stays unknown; no artifact establishes whether service is due."
     ]
   },

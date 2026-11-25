@@ -13,12 +13,13 @@ from datetime import date, datetime
 import hashlib
 import json
 from pathlib import Path
+import re
 import struct
 from typing import Mapping, Protocol, Sequence
 import zlib
 
 from household_os.maintenance_workflow import (
-    MAX_BYTES, WorkflowBinding, WorkflowError, _bounded, _keys, _reference, _text,
+    MAX_BYTES, WorkflowBinding, WorkflowError, _bounded, _keys, _text,
     _uuid, prepare_finding, validate_manifest,
 )
 
@@ -38,7 +39,13 @@ KINDS = {
 _MAGIC = {"image/jpeg": b"\xff\xd8\xff", "image/png": b"\x89PNG\r\n\x1a\n", "application/pdf": b"%PDF-"}
 _INGEST_KIND = {"image/jpeg": "image", "image/png": "image", "application/pdf": "pdf"}
 _ORIGINS = ("person_transcription", "automated_extraction")
-_FORBIDDEN_REF_PREFIXES = ("http:", "https:", "file:", "/", "\\", ".")
+# Opaque store references: a lowercase namespace, a colon, then only
+# letters, digits and ``:._-``. No slash, backslash, tilde, query or space,
+# so URLs, bucket URIs and filesystem paths cannot match.
+_STORE_REFERENCE = re.compile(r"[a-z][a-z0-9-]{0,31}:[A-Za-z0-9:._-]+")
+_RESERVED_SCHEMES = frozenset({"data", "file", "ftp", "ftps", "gs", "http", "https", "javascript",
+                               "s3", "sftp", "smb", "ssh", "urn", "ws", "wss"})
+_UNSUPPORTED_REASONS = ("field_not_supported_by_artifact", "value_not_a_calendar_date")
 _REMAINING = ("Private storage, short-lived signed access, verify-on-read in the deployment, "
               "expiry purge and an off-platform backup target remain separate deployment work.")
 
@@ -49,7 +56,10 @@ class AuthorizedEvidenceStore(Protocol):
     ``board_id`` is the single board the host authorized this store for.
     ``put`` must be content-addressed and idempotent: the same digest returns
     the same opaque reference. ``read`` returns the stored bytes for that
-    reference. Signed URLs, bucket names and paths never cross this boundary.
+    reference. References must match an allowlisted opaque form
+    (``namespace:token``, letters, digits and ``:._-`` only, at most 512 bytes,
+    no reserved URL scheme). Anything shaped like a URL, bucket URI or path is
+    refused, so signed URLs, bucket names and paths cannot cross this boundary.
     """
     store_name: str
     board_id: str
@@ -83,8 +93,9 @@ def _instant(value: object) -> str:
 
 
 def _store_reference(value: object) -> str:
-    value = _reference(value)
-    if len(value.encode("utf-8")) > 512 or value.lower().startswith(_FORBIDDEN_REF_PREFIXES):
+    if (not isinstance(value, str) or len(value.encode("utf-8")) > 512
+            or not _STORE_REFERENCE.fullmatch(value)
+            or value.split(":", 1)[0] in _RESERVED_SCHEMES):
         raise WorkflowError("opaque_store_reference_required")
     return value
 
@@ -148,19 +159,29 @@ def _claim_value(field: str, value: str):
     return value
 
 
-def intake_artifact(artifact: dict, data: bytes, *, manifest: dict, binding: WorkflowBinding,
-                    store: AuthorizedEvidenceStore, received_at: str) -> dict:
-    """Verify, store through the host boundary, read back and prepare existing row shapes."""
+def _check_artifact(artifact: dict, data: object, *, manifest: dict, binding: WorkflowBinding,
+                    store: AuthorizedEvidenceStore) -> tuple[str, int, str]:
+    """Every refusal this module can decide on its own, before any store call."""
     if binding.source_ref != manifest["proposal"]["source_ref"]:
         raise WorkflowError("workflow_context_mismatch")
     if getattr(store, "board_id", None) != binding.board_id:
         raise WorkflowError("store_scope_mismatch")
     store_name = _text(getattr(store, "store_name", None), 120)
     digest, size = _check_bytes(artifact, data)
-    reference = _store_reference(store.put(sha256=digest, media_type=artifact["media_type"], data=bytes(data)))
-    stored = store.read(reference)
+    return digest, size, store_name
+
+
+def _verify_stored(store: AuthorizedEvidenceStore, reference: str, digest: str, error: str) -> None:
+    try:
+        stored = store.read(reference)
+    except Exception:
+        raise WorkflowError(error) from None
     if not isinstance(stored, (bytes, bytearray)) or sha256_hex(stored) != digest:
-        raise WorkflowError("stored_digest_mismatch")
+        raise WorkflowError(error)
+
+
+def _record(artifact: dict, *, digest: str, size: int, store_name: str, reference: str,
+            manifest: dict, binding: WorkflowBinding, received_at: str) -> dict:
     spec = KINDS[artifact["kind"]]
     ingest_source = {
         "source_kind": _INGEST_KIND[artifact["media_type"]], "source_ref": reference,
@@ -190,6 +211,16 @@ def intake_artifact(artifact: dict, data: bytes, *, manifest: dict, binding: Wor
             "claims": claims, "unsupported_claims": unsupported}
 
 
+def intake_artifact(artifact: dict, data: bytes, *, manifest: dict, binding: WorkflowBinding,
+                    store: AuthorizedEvidenceStore, received_at: str) -> dict:
+    """Verify, store through the host boundary, read back and prepare existing row shapes."""
+    digest, size, store_name = _check_artifact(artifact, data, manifest=manifest, binding=binding, store=store)
+    reference = _store_reference(store.put(sha256=digest, media_type=artifact["media_type"], data=bytes(data)))
+    _verify_stored(store, reference, digest, "stored_digest_mismatch")
+    return _record(artifact, digest=digest, size=size, store_name=store_name, reference=reference,
+                   manifest=manifest, binding=binding, received_at=received_at)
+
+
 def _link_key(link: dict) -> tuple:
     return (link.get("item_id"), link.get("relation"), link.get("source_store"),
             link.get("source_kind"), link.get("source_key"))
@@ -201,11 +232,22 @@ def prepare_evidence(manifest_value: dict, intake_value: dict, artifacts: Mappin
     """Prepare evidence rows and a proposed finding; nothing is inserted or accepted.
 
     ``existing_links`` are item-link rows the host already holds for this item.
-    A repeat of the same bytes maps to the same unique link key and is reported
-    as already linked instead of producing a second row.
+    A repeat of the same bytes maps to the same unique link key: it is verified
+    by reading the existing reference, is not written again, and is reported as
+    already linked instead of producing a second row.
+
+    Every refusal this module decides (fields, scope, bytes, digest, duplicate
+    bytes, existing-link scope, existing-reference conflict) happens before the
+    first ``store.put``. Only a refusal of the store's own response (a
+    non-opaque reference or failed verify-on-read) can follow a write; content
+    addressing keeps that write idempotent, and this module never deletes.
     """
     manifest = validate_manifest(manifest_value)
     intake = validate_intake(intake_value, manifest)
+    if binding.source_ref != manifest["proposal"]["source_ref"]:
+        raise WorkflowError("workflow_context_mismatch")
+    if getattr(store, "board_id", None) != binding.board_id:
+        raise WorkflowError("store_scope_mismatch")
     declared = {artifact["kind"] for artifact in intake["artifacts"]}
     if not isinstance(artifacts, Mapping) or set(artifacts) != declared:
         raise WorkflowError("artifact_set_mismatch")
@@ -214,19 +256,36 @@ def prepare_evidence(manifest_value: dict, intake_value: dict, artifacts: Mappin
         if not isinstance(row, dict) or row.get("item_id") != binding.item_id or row.get("board_id") != binding.board_id:
             raise WorkflowError("existing_link_scope_mismatch")
         existing[_link_key(row)] = row
-    records = [intake_artifact(artifact, artifacts[artifact["kind"]], manifest=manifest,
-                               binding=binding, store=store, received_at=intake["received_at"])
+    checked = [(artifact, *_check_artifact(artifact, artifacts[artifact["kind"]], manifest=manifest,
+                                           binding=binding, store=store))
                for artifact in intake["artifacts"]]
-    if len({r["possession"]["source_sha256"] for r in records}) != len(records):
+    if len({digest for _, digest, _, _ in checked}) != len(checked):
         raise WorkflowError("duplicate_artifact_bytes")
-    new_links, already = [], []
-    for record in records:
+    priors = []
+    for artifact, digest, _, store_name in checked:
+        key = (binding.item_id, "evidence", store_name, KINDS[artifact["kind"]]["link_kind"], "sha256:" + digest)
+        prior = existing.get(key)
+        if prior is not None:
+            try:
+                reference = _store_reference(prior.get("evidence_ref"))
+            except WorkflowError:
+                raise WorkflowError("store_reference_conflict") from None
+            _verify_stored(store, reference, digest, "store_reference_conflict")
+        priors.append(prior)
+    records, new_links, already = [], [], []
+    for (artifact, digest, size, store_name), prior in zip(checked, priors):
+        if prior is None:
+            reference = _store_reference(store.put(sha256=digest, media_type=artifact["media_type"],
+                                                   data=bytes(artifacts[artifact["kind"]])))
+            _verify_stored(store, reference, digest, "stored_digest_mismatch")
+        else:
+            reference = prior["evidence_ref"]
+        record = _record(artifact, digest=digest, size=size, store_name=store_name, reference=reference,
+                         manifest=manifest, binding=binding, received_at=intake["received_at"])
+        records.append(record)
         link = record["item_link"]
-        prior = existing.get(_link_key(link))
         if prior is None:
             new_links.append(link)
-        elif prior.get("evidence_ref") != link["evidence_ref"]:
-            raise WorkflowError("store_reference_conflict")
         else:
             already.append({"source_kind": link["source_kind"], "source_key": link["source_key"],
                             "evidence_ref": link["evidence_ref"]})
@@ -304,32 +363,117 @@ def _handoff(manifest: dict, records: list[dict]) -> dict:
                 f"({r['possession']['byte_length']} bytes, verified digest)" for r in records] or ["Nothing yet."]
     supports = []
     if proposed["model"] is not None:
-        supports.append(f"The label photo is said to show model {proposed['model']} (unconfirmed).")
+        supports.append("The label photo is said to show model "
+                        f"{json.dumps(proposed['model'], ensure_ascii=True)} (quoted untrusted claim, unconfirmed).")
     if proposed["last_service_at"] is not None:
-        supports.append(f"The receipt is said to show service on {proposed['last_service_at']} (unconfirmed).")
+        supports.append("The receipt is said to show service on "
+                        f"{json.dumps(proposed['last_service_at'], ensure_ascii=True)} (quoted untrusted claim, unconfirmed).")
     supports.append("Service status stays unknown; no artifact establishes whether service is due.")
-    return {"supplied": supplied, "supports": supports,
+    return {"contentTrust": "untrusted", "supplied": supplied, "supports": supports,
             "missing": _finding(manifest, records)["still_missing"], "remaining_storage_work": _REMAINING}
+
+
+def _rebuild_records(finding: object, verified: list[dict]) -> list[dict]:
+    """Re-derive the evidence records from validated fields only.
+
+    Status, acceptance, blocking, confirmed facts, authorization flags and any
+    unknown keys in the supplied finding are never read; ``_finding`` sets them.
+    """
+    if not isinstance(finding, dict):
+        raise WorkflowError("evidence_finding_required")
+    possession, claims, unsupported = (finding.get(k) for k in ("possession", "claims", "unsupported_claims"))
+    if not all(isinstance(v, list) for v in (possession, claims, unsupported)) or len(possession) > len(KINDS):
+        raise WorkflowError("invalid_evidence_finding")
+    records, kinds = [], set()
+    for row in possession:
+        _keys(row, {"artifact_kind", "evidence_ref", "source_sha256", "byte_length", "media_type",
+                    "digest_verified_on_read"})
+        kind = row["artifact_kind"]
+        if kind not in KINDS or kind in kinds or row["media_type"] not in KINDS[kind]["media"]:
+            raise WorkflowError("invalid_evidence_finding")
+        kinds.add(kind)
+        digest, reference = _digest(row["source_sha256"]), _store_reference(row["evidence_ref"])
+        if (type(row["byte_length"]) is not int or not 1 <= row["byte_length"] <= MAX_ARTIFACT_BYTES
+                or row["digest_verified_on_read"] is not True):
+            raise WorkflowError("invalid_evidence_finding")
+        if not any(link["source_kind"] == KINDS[kind]["link_kind"] and link["source_key"] == "sha256:" + digest
+                   and link["evidence_ref"] == reference for link in verified):
+            raise WorkflowError("prepared_evidence_missing")
+        records.append({"possession": {"artifact_kind": kind, "evidence_ref": reference, "source_sha256": digest,
+                                       "byte_length": row["byte_length"], "media_type": row["media_type"],
+                                       "digest_verified_on_read": True},
+                        "claims": [], "unsupported_claims": []})
+    if len(records) != len(verified):
+        raise WorkflowError("prepared_evidence_missing")
+    by_kind = {r["possession"]["artifact_kind"]: r for r in records}
+    if len(claims) > MAX_CLAIMS * len(KINDS) or len(unsupported) > MAX_CLAIMS * len(KINDS) + 2:
+        raise WorkflowError("invalid_evidence_finding")
+    for claim in claims:
+        _keys(claim, {"field", "value", "artifact_kind", "evidence_ref", "origin", "status"})
+        record = by_kind.get(claim["artifact_kind"])
+        if (record is None or claim["evidence_ref"] != record["possession"]["evidence_ref"]
+                or claim["field"] not in KINDS[claim["artifact_kind"]]["fields"]
+                or claim["origin"] not in _ORIGINS):
+            raise WorkflowError("invalid_evidence_finding")
+        value = _claim_value(claim["field"], _text(claim["value"], 120))
+        if value is None:
+            raise WorkflowError("invalid_evidence_finding")
+        record["claims"].append({"field": claim["field"], "value": value, "artifact_kind": claim["artifact_kind"],
+                                 "evidence_ref": claim["evidence_ref"], "origin": claim["origin"],
+                                 "status": "unconfirmed"})
+    for row in unsupported:
+        if isinstance(row, dict) and set(row) == {"field", "reason"} and row["reason"] == "conflicting_claims":
+            continue  # recomputed by _finding
+        _keys(row, {"field", "artifact_kind", "reason"})
+        record = by_kind.get(row["artifact_kind"])
+        if record is None or row["reason"] not in _UNSUPPORTED_REASONS:
+            raise WorkflowError("invalid_evidence_finding")
+        record["unsupported_claims"].append({"field": _text(row["field"], 64), "artifact_kind": row["artifact_kind"],
+                                             "reason": row["reason"]})
+    return records
 
 
 def prepare_evidence_finding(packet: dict, manifest_value: dict, package: dict,
                              binding: WorkflowBinding) -> dict:
     """Use an existing worker research packet once its context carries the prepared links.
 
-    The baseline packet checks run unchanged. Each newly prepared link must be
-    present, unomitted, in the bounded runtime evidence. No tool or fetch is added.
+    The baseline packet checks run unchanged. The package must belong to this
+    workflow and scenario and carry at least one link; each link must be
+    present, unomitted, in the bounded runtime evidence. The finding is rebuilt
+    from validated possession and claim fields, so it is always proposed,
+    blocked, unaccepted, without confirmed facts or external authority.
+    Supplied status or authorization flags are ignored. No tool or fetch is added.
     """
     baseline = prepare_finding(packet, manifest_value, binding)
+    manifest = validate_manifest(manifest_value)
     if not isinstance(package, dict) or package.get("contract") != "household-maintenance-evidence-package/1":
         raise WorkflowError("evidence_package_required")
+    finding = package.get("proposed_finding")
+    for value in (package, finding):
+        if (not isinstance(value, dict) or value.get("synthetic") is not True
+                or value.get("workflow_id") != manifest["workflow_id"]
+                or value.get("scenario_id") != manifest["scenario_id"]):
+            raise WorkflowError("workflow_scope_mismatch")
+    if (package.get("baseline_finding_ref") != manifest["finding_ref"]
+            or finding.get("responds_to") != manifest["finding_ref"]):
+        raise WorkflowError("workflow_scope_mismatch")
+    links, already = package.get("item_links"), package.get("already_linked")
+    if not isinstance(links, list) or not isinstance(already, list) or not links + already:
+        raise WorkflowError("prepared_evidence_missing")
+    wanted = []
+    for link in links + already:
+        if not isinstance(link, dict):
+            raise WorkflowError("prepared_evidence_missing")
+        if link in links and (link.get("board_id") != binding.board_id or link.get("item_id") != binding.item_id):
+            raise WorkflowError("existing_link_scope_mismatch")
+        wanted.append({k: link.get(k) for k in ("source_kind", "source_key", "evidence_ref")})
     rows = packet["context"]["evidence"]
-    wanted = package["item_links"] + [{**a, "source_store": None} for a in package["already_linked"]]
     for link in wanted:
         if not any(isinstance(row, dict) and row.get("evidence_ref") == link["evidence_ref"]
                    and row.get("source_kind") == link["source_kind"] and row.get("source_key") == link["source_key"]
                    and row.get("references_omitted") is False for row in rows):
             raise WorkflowError("prepared_evidence_missing")
-    result = deepcopy(package["proposed_finding"])
+    result = _finding(manifest, _rebuild_records(finding, wanted))
     result["provenance"] = baseline["provenance"]
     _bounded(result)
     return result
@@ -399,7 +543,10 @@ def main(argv: list[str] | None = None) -> int:
                 raw = stream.read(MAX_BYTES + 1)
             if len(raw) > MAX_BYTES:
                 raise WorkflowError("byte_budget_exceeded")
-            values.append(json.loads(raw))
+            value = json.loads(raw)
+            if not isinstance(value, dict):
+                raise WorkflowError("invalid_fields")
+            values.append(value)
         manifest, intake = values
         binding = WorkflowBinding(board_id=manifest["demo"]["board_id"], item_id=manifest["demo"]["item_id"],
                                   source_ref=manifest["proposal"]["source_ref"])
@@ -412,7 +559,7 @@ def main(argv: list[str] | None = None) -> int:
                 stream.write(rendered)
         else:
             print(rendered, end="")
-    except (OSError, ValueError, UnicodeError, KeyError, TypeError) as exc:
+    except (OSError, ValueError, UnicodeError, KeyError, TypeError, AttributeError) as exc:
         code = str(exc) if isinstance(exc, WorkflowError) else "evidence_preparation_failed"
         parser.exit(2, f"{code}\n")
     return 0
